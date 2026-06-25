@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: roomhub-postgres
+    environment:
+      POSTGRES_DB: roomhub_b2b
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - roomhub_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  roomhub_postgres_data:
