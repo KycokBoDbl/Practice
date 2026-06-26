@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:18
+    image: postgres:16
     container_name: roomhub-postgres
     environment:
       POSTGRES_DB: roomhub_b2b
