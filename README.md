@@ -1,2 +1,35 @@
-Формат запроса: GET /api/listings
-Формат вывода: [{"id":1,"title":"Переговорная на 8 человек","city":"Москва","pricePerHour":2500.00,"capacity":8,"spaceType":"MEETING_ROOM","imageUrl":"https://placehold.co/600x400"},{"id":2,"title":"Конференц-зал на 50 человек","city":"Санкт-Петербург","pricePerHour":8000.00,"capacity":50,"spaceType":"CONFERENCE_HALL","imageUrl":"https://placehold.co/600x400"}]
+# RoomHub B2B
+
+## Быстрый запуск
+
+Перед запуском должен быть установлен и запущен Docker Desktop.
+
+Из корня проекта выполнить:
+
+```bash
+docker compose up --build
+```
+
+После успешного запуска приложение будет доступно по адресу:
+
+```
+http://localhost:3000
+```
+
+## Остановка проекта
+
+```bash
+docker compose down
+```
+
+## Основной сценарий работы
+
+Frontend запрашивает список помещений через REST API backend.
+
+Backend получает данные из PostgreSQL и возвращает их на frontend для отображения в каталоге.
+
+Просмотреть каталог помещений можно через пункт меню **«Помещения»** или перейти по адресу:
+
+```
+http://localhost:3000/spaces
+```
