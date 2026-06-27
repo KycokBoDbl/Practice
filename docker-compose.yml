@@ -11,5 +11,29 @@ services:
     volumes:
       - roomhub_postgres_data:/var/lib/postgresql/data
 
+  backend:
+    build:
+      context: ./backend/RoomHubB2B
+    container_name: roomhub-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/roomhub_b2b
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8081
+    container_name: roomhub-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
 volumes:
   roomhub_postgres_data:
