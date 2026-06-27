@@ -24,7 +24,9 @@ public class ListingService {
         return new ListingResponseDto(
                 listing.getId(),
                 listing.getTitle(),
+                listing.getDescription(),
                 listing.getCity(),
+                listing.getAddress(),
                 listing.getPricePerHour(),
                 listing.getCapacity(),
                 listing.getSpaceType(),
