@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import { Link } from 'react-router-dom'
 import { getListings } from "../../api/listings";
 import type { Listing } from "../../types/listing";
 import { SPACE_TYPE_LABELS } from "../../types/spaceType";
+import styles from './SpacesPage.module.css'
+
 
 export function SpacesPage() {
   const [listings, setListings] = useState<Listing[]>([]);
@@ -27,52 +30,44 @@ export function SpacesPage() {
   }
 
   return (
-    <main>
-      <h1>Каталог помещений</h1>
+    <main className={styles.page}>
+      <div className={styles.header}>
+        <h1 className={styles.title}>Помещения</h1>
+      </div>
 
       {listings.length === 0 ? (
         <p>Помещений пока нет.</p>
       ) : (
-        <div>
+        <section className={styles.grid}>
           {listings.map((listing) => (
-            <div
+            <Link
               key={listing.id}
-              style={{
-                border: "1px solid #ccc",
-                borderRadius: "8px",
-                padding: "16px",
-                marginBottom: "16px",
-              }}
+              to={`/spaces/${listing.id}`}
+              className={styles.card}
             >
-              <h2>{listing.title}</h2>
-
-              <p>
-                <strong>Город:</strong> {listing.city}
-              </p>
-
-              <p>
-                <strong>Стоимость:</strong>{" "}
-                {listing.pricePerHour} ₽/час
-              </p>
-
-              <p>
-                <strong>Вместимость:</strong>{" "}
-                {listing.capacity} человек
-              </p>
-
-              <p>
-                <strong>Тип:</strong> {SPACE_TYPE_LABELS[listing.spaceType] ?? listing.spaceType}
-              </p>
-
               <img
+                className={styles.image}
                 src={listing.imageUrl}
                 alt={listing.title}
-                width={300}
               />
-            </div>
+
+              <div className={styles.content}>
+                <h2 className={styles.cardTitle}>{listing.title}</h2>
+
+                <p className={styles.meta}>📍 {listing.city}</p>
+                <p className={styles.meta}>👥 до {listing.capacity} человек</p>
+                <p className={styles.meta}>
+                  🏢 {SPACE_TYPE_LABELS[listing.spaceType] ?? listing.spaceType}
+                </p>
+
+                <div className={styles.price}>
+                  {listing.pricePerHour.toLocaleString('ru-RU')} ₽/час
+                </div>
+              </div>
+            </Link>
           ))}
-        </div>
+        </section>
       )}
     </main>
-  );
+  )
 }
