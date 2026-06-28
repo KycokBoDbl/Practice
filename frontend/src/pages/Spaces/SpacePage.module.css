@@ -111,6 +111,7 @@
   text-align: center;
   text-decoration: none;
   cursor: pointer;
+  margin-top: 32px;
 }
 
 @media (max-width: 800px) {
