@@ -11,11 +11,15 @@ public class ListingResponseDto {
     private Integer capacity;
     private String spaceType;
     private String imageUrl;
+    private String description;
+    private String address;
 
     public ListingResponseDto(
             Long id,
             String title,
+            String description,
             String city,
+            String address,
             BigDecimal pricePerHour,
             Integer capacity,
             String spaceType,
@@ -23,7 +27,9 @@ public class ListingResponseDto {
     ) {
         this.id = id;
         this.title = title;
+        this.description = description;
         this.city = city;
+        this.address = address;
         this.pricePerHour = pricePerHour;
         this.capacity = capacity;
         this.spaceType = spaceType;
@@ -38,8 +44,16 @@ public class ListingResponseDto {
         return title;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
     public String getCity() {
         return city;
+    }
+
+    public String getAddress() {
+        return address;
     }
 
     public BigDecimal getPricePerHour() {
