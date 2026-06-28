@@ -31,9 +31,48 @@ export function SpacesPage() {
 
   return (
     <main className={styles.page}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Помещения</h1>
+      <div className={styles.hero}>
+        <div>
+          <h1 className={styles.title}>Помещения для бизнеса и мероприятий</h1>
+          <p className={styles.subtitle}>
+            Просматривайте доступные пространства, изучайте
+            подробную информацию и выбирайте подходящую площадку
+            для встреч, обучения и корпоративных мероприятий.
+          </p>
+        </div>
+        <div className={styles.features}>
+          <div className={styles.feature}>
+            <span className={styles.featureIcon}>🏢</span>
+            <div>
+              <h1>Разные типы помещений</h1>
+              <p>Переговорные, конференц-залы, классы, лофты и шоурумы.</p>
+            </div>
+          </div>
+
+          <div className={styles.feature}>
+            <span className={styles.featureIcon}>📍</span>
+            <div>
+              <h1>Несколько городов</h1>
+              <p>Выбирайте площадки в Москве, Санкт-Петербурге, Казани и других городах.</p>
+            </div>
+          </div>
+
+          <div className={styles.feature}>
+            <span className={styles.featureIcon}>🕒</span>
+            <div>
+              <h1>Почасовая аренда</h1>
+              <p>Сравнивайте стоимость и подбирайте помещение под нужное время.</p>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <section className={styles.catalogHeader}>
+        <div>
+          <h2>Каталог помещений</h2>
+          <p>Выберите подходящее пространство и перейдите к подробному описанию.</p>
+        </div>
+      </section>
 
       {listings.length === 0 ? (
         <p>Помещений пока нет.</p>

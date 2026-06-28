@@ -35,8 +35,8 @@ export function SpacePage() {
   if (!listing) {
     return (
       <main className={styles.page}>
-        <Link to="/spaces" className={styles.backLink}>
-          ← Вернуться к каталогу
+        <Link to="/" className={styles.backLink}>
+          ← Вернуться на главную
         </Link>
         <h1>Помещение не найдено</h1>
       </main>
@@ -46,7 +46,7 @@ export function SpacePage() {
   return (
     <main className={styles.page}>
       <Link to="/spaces" className={styles.backLink}>
-        ← Вернуться к каталогу
+        ← Вернуться на главную
       </Link>
 
       <div className={styles.layout}>

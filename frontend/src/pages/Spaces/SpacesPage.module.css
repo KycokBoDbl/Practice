@@ -66,3 +66,73 @@
   font-weight: 700;
   color: #2563eb;
 }
+
+.hero {
+  margin-bottom: 32px;
+  padding: 32px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #eff6ff, #ffffff);
+  border: 1px solid #dbeafe;
+}
+
+.badge {
+  margin: 0 0 12px;
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.title {
+  max-width: 760px;
+}
+
+.subtitle {
+  max-width: 680px;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.feature {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+}
+
+.featureIcon {
+  font-size: 24px;
+}
+
+.feature h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.feature p {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.catalogHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  margin: 40px 0 24px;
+}
+
+.catalogHeader h2 {
+  margin: 0;
+  font-size: 30px;
+}
+
+.catalogHeader p {
+  margin: 6px 0 0;
+  color: #64748b;
+}
