@@ -95,8 +95,6 @@ export function SpacePage() {
         </section>
 
         <section className={styles.calendarSection}>
-          <h2>Календарь бронирования</h2>
-
           <section className={styles.calendarSection}>
             <BookingCalendar pricePerHour={listing.pricePerHour} mode="preview" />
 
