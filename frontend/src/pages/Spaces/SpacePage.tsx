@@ -5,6 +5,7 @@ import { getListings } from '../../api/listings'
 import type { Listing } from '../../types/listing'
 import { SPACE_TYPE_LABELS } from '../../types/spaceType'
 import styles from './SpacePage.module.css'
+import { BookingCalendar } from '../../components/BookingCalendar/BookingCalendar'
 
 export function SpacePage() {
   const { id } = useParams()
@@ -94,18 +95,17 @@ export function SpacePage() {
         </section>
 
         <section className={styles.calendarSection}>
-          <h2>Календарь бронирования</h2>
+          <section className={styles.calendarSection}>
+            <BookingCalendar
+              listingId={listing.id}
+              pricePerHour={listing.pricePerHour}
+              mode="preview"
+            />
 
-          <div className={styles.calendarPlaceholder}>
-            <div>
-              <strong>Календарь будет доступен позже</strong>
-              <p>На следующем этапе здесь появится выбор даты и времени.</p>
-            </div>
-          </div>
-
-          <Link to="/booking" className={styles.button}>
-            Забронировать
-          </Link>
+            <Link to={`/booking/${listing.id}`} className={styles.button}>
+              Забронировать
+            </Link>
+          </section>
         </section>
       </div>
     </main>

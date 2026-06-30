@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from 'react-router-dom'
 import { getListings } from "../../api/listings";
 import type { Listing } from "../../types/listing";
 import { SPACE_TYPE_LABELS } from "../../types/spaceType";
@@ -7,8 +7,19 @@ import styles from './SpacesPage.module.css'
 
 
 export function SpacesPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
+  const searchQuery = (searchParams.get('q') ?? '').trim().toLowerCase();
+  const searchTokens = useMemo(
+    () => searchQuery.split(/\s+/).filter((token) => token.length >= 3),
+    [searchQuery],
+  );
+  const selectedCity = searchParams.get('city') ?? '';
+  const minCapacity = searchParams.get('minCapacity') ?? '';
+  const maxCapacity = searchParams.get('maxCapacity') ?? '';
+  const minPrice = searchParams.get('minPrice') ?? '';
+  const maxPrice = searchParams.get('maxPrice') ?? '';
 
   useEffect(() => {
     async function loadListings() {
@@ -24,6 +35,52 @@ export function SpacesPage() {
 
     loadListings();
   }, []);
+
+  const filteredListings = useMemo(() => {
+    const minCapacityValue = Number(minCapacity);
+    const maxCapacityValue = Number(maxCapacity);
+    const minPriceValue = Number(minPrice);
+    const maxPriceValue = Number(maxPrice);
+
+    return listings.filter((listing) => {
+      const searchText = [
+        listing.title,
+        listing.description,
+        listing.city,
+        listing.address,
+        listing.spaceType,
+        SPACE_TYPE_LABELS[listing.spaceType],
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      const matchesSearch =
+        searchTokens.length === 0 ||
+        searchTokens.every((token) => searchText.includes(token));
+      const matchesCity = selectedCity === '' || listing.city === selectedCity;
+      const matchesMinCapacity =
+        minCapacity === '' || listing.capacity >= minCapacityValue;
+      const matchesMaxCapacity =
+        maxCapacity === '' || listing.capacity <= maxCapacityValue;
+      const matchesMinPrice =
+        minPrice === '' || listing.pricePerHour >= minPriceValue;
+      const matchesMaxPrice =
+        maxPrice === '' || listing.pricePerHour <= maxPriceValue;
+
+      return (
+        matchesSearch &&
+        matchesCity &&
+        matchesMinCapacity &&
+        matchesMaxCapacity &&
+        matchesMinPrice &&
+        matchesMaxPrice
+      );
+    });
+  }, [listings, maxCapacity, maxPrice, minCapacity, minPrice, searchTokens, selectedCity]);
+
+  function resetFilters() {
+    setSearchParams({});
+  }
 
   if (loading) {
     return <p>Загрузка помещений...</p>;
@@ -67,7 +124,7 @@ export function SpacesPage() {
         </div>
       </div>
 
-      <section className={styles.catalogHeader}>
+      <section className={styles.catalogHeader} id="catalog">
         <div>
           <h2>Каталог помещений</h2>
           <p>Выберите подходящее пространство и перейдите к подробному описанию.</p>
@@ -76,9 +133,16 @@ export function SpacesPage() {
 
       {listings.length === 0 ? (
         <p>Помещений пока нет.</p>
+      ) : filteredListings.length === 0 ? (
+        <div className={styles.emptyState}>
+          <p>По выбранным фильтрам помещений нет.</p>
+          <button type="button" className={styles.resetButton} onClick={resetFilters}>
+            Сбросить фильтры
+          </button>
+        </div>
       ) : (
         <section className={styles.grid}>
-          {listings.map((listing) => (
+          {filteredListings.map((listing) => (
             <Link
               key={listing.id}
               to={`/spaces/${listing.id}`}

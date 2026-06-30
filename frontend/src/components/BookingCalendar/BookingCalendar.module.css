@@ -1,0 +1,235 @@
+.calendar {
+  display: grid;
+  gap: 24px;
+}
+
+.header h2 {
+  margin: 0 0 8px;
+}
+
+.header p {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  color: #475569;
+  font-size: 14px;
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.availableDot,
+.partialDot,
+.bookedDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.availableDot {
+  background: #22c55e;
+}
+
+.partialDot {
+  background: #f59e0b;
+}
+
+.bookedDot {
+  background: #ef4444;
+}
+
+.monthCard {
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  background: #ffffff;
+}
+
+.monthTitle {
+  margin: 0 0 16px;
+  text-transform: capitalize;
+}
+
+.weekDays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 8px;
+  color: #64748b;
+  font-size: 14px;
+  text-align: center;
+}
+
+.monthGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.dayButton {
+  min-height: 72px;
+  padding: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dayButton span,
+.slotButton {
+  font-weight: 700;
+}
+
+.dayButton small,
+.slotButton small {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.available {
+  border-color: #86efac;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.partial {
+  border-color: #fcd34d;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.booked {
+  border-color: #fca5a5;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.selected {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.dayButton:disabled,
+.slotButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.section {
+  display: grid;
+  gap: 12px;
+}
+
+.section h3 {
+  margin: 0;
+}
+
+.slots,
+.durations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.slotButton {
+  min-width: 110px;
+  padding: 12px 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.summaryLabel {
+  margin: 0 0 6px;
+  color: #64748b;
+}
+
+.summaryValue {
+  margin: 0;
+  font-weight: 700;
+}
+
+.total {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.confirmButton {
+  width: 100%;
+  padding: 14px 18px;
+  border: none;
+  border-radius: 12px;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.confirmButton:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+.loading {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.monthHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.monthNavButton {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  background: #fff;
+  color: #2563eb;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.monthNavButton:hover {
+  background: #eff6ff;
+}
+
+.monthTitle {
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.monthNavButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
