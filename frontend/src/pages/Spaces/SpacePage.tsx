@@ -96,7 +96,11 @@ export function SpacePage() {
 
         <section className={styles.calendarSection}>
           <section className={styles.calendarSection}>
-            <BookingCalendar pricePerHour={listing.pricePerHour} mode="preview" />
+            <BookingCalendar
+              listingId={listing.id}
+              pricePerHour={listing.pricePerHour}
+              mode="preview"
+            />
 
             <Link to={`/booking/${listing.id}`} className={styles.button}>
               Забронировать

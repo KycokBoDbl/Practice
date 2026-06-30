@@ -49,7 +49,10 @@ export function BookingPage() {
           {listing.city}, {listing.address}
         </p>
 
-        <BookingCalendar pricePerHour={listing.pricePerHour} />
+        <BookingCalendar
+          listingId={listing.id}
+          pricePerHour={listing.pricePerHour}
+        />
       </section>
     </main>
   )

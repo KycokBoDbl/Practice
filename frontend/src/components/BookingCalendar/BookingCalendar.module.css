@@ -191,6 +191,17 @@
   cursor: pointer;
 }
 
+.confirmButton:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+.loading {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
 .monthHeader {
   display: flex;
   align-items: center;
