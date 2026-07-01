@@ -35,7 +35,18 @@ class OpenApiContractTests {
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.city").exists())
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.pricePerHour").exists())
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.capacity").exists())
-                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.spaceType").exists())
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.spaceType.type")
+                        .value("string"))
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.spaceType.enum.length()")
+                        .value(5))
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.spaceType.enum")
+                        .value(org.hamcrest.Matchers.containsInAnyOrder(
+                                "MEETING_ROOM",
+                                "CONFERENCE_HALL",
+                                "CLASSROOM",
+                                "LOFT",
+                                "SHOWROOM"
+                        )))
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.imageUrl").exists())
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.description").exists())
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.address").exists());
@@ -83,7 +94,7 @@ class OpenApiContractTests {
                 .andExpect(jsonPath("$[0].city").exists())
                 .andExpect(jsonPath("$[0].pricePerHour").exists())
                 .andExpect(jsonPath("$[0].capacity").exists())
-                .andExpect(jsonPath("$[0].spaceType").exists())
+                .andExpect(jsonPath("$[?(@.spaceType == 'MEETING_ROOM')]").exists())
                 .andExpect(jsonPath("$[0].imageUrl").exists())
                 .andExpect(jsonPath("$[0].description").exists())
                 .andExpect(jsonPath("$[0].address").exists());

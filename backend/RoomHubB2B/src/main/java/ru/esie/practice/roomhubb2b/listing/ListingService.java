@@ -14,7 +14,7 @@ public class ListingService {
     }
 
     public List<ListingResponseDto> getPublishedListings() {
-        return listingRepository.findByStatus("PUBLISHED")
+        return listingRepository.findByStatus(ListingStatus.PUBLISHED)
                 .stream()
                 .map(this::toResponseDto)
                 .toList();
@@ -24,13 +24,13 @@ public class ListingService {
         return new ListingResponseDto(
                 listing.getId(),
                 listing.getTitle(),
-                listing.getDescription(),
                 listing.getCity(),
-                listing.getAddress(),
                 listing.getPricePerHour(),
                 listing.getCapacity(),
                 listing.getSpaceType(),
-                listing.getImageUrl()
+                listing.getImageUrl(),
+                listing.getDescription(),
+                listing.getAddress()
         );
     }
 }

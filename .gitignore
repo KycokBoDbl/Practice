@@ -28,9 +28,3 @@ Thumbs.db
 
 # Docker
 *.pid
-
-# AI tools
-.codex/
-openspec/
-.mcp/
-AGENTS.md
