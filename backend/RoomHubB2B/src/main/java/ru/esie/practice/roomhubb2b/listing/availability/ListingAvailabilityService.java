@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import ru.esie.practice.roomhubb2b.listing.ListingRepository;
+import ru.esie.practice.roomhubb2b.listing.ListingStatus;
 import ru.esie.practice.roomhubb2b.listing.availability.dto.BusyIntervalResponseDto;
 import ru.esie.practice.roomhubb2b.listing.availability.dto.ListingAvailabilityResponseDto;
 
@@ -16,7 +17,6 @@ import java.util.List;
 @Service
 public class ListingAvailabilityService {
 
-    private static final String PUBLISHED = "PUBLISHED";
     private static final Duration MAX_RANGE = Duration.ofDays(93);
 
     private final ListingRepository listingRepository;
@@ -37,7 +37,7 @@ public class ListingAvailabilityService {
     ) {
         validateRange(from, to);
 
-        if (!listingRepository.existsByIdAndStatus(listingId, PUBLISHED)) {
+        if (!listingRepository.existsByIdAndStatus(listingId, ListingStatus.PUBLISHED)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found");
         }
 

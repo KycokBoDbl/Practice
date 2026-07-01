@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface ListingRepository extends JpaRepository<ListingEntity, Long> {
 
-    List<ListingEntity> findByStatus(String status);
+    List<ListingEntity> findByStatus(ListingStatus status);
 
-    boolean existsByIdAndStatus(Long id, String status);
+    boolean existsByIdAndStatus(Long id, ListingStatus status);
 }

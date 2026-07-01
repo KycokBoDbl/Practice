@@ -105,6 +105,8 @@ Linux/macOS:
 
 Для внутреннего изменения без влияния на API выполните те же тесты и export. Отсутствие diff в generated-файле подтверждает, что frontend-контракт не изменился.
 
+Docker build запускает автономные unit/controller-тесты, которым не нужна внешняя база данных. Полный набор тестов использует PostgreSQL и должен быть успешно выполнен командой `./mvnw test` до `docker compose up --build`.
+
 Проверка drift для CI или перед commit:
 
 ```powershell

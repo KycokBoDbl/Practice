@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import ru.esie.practice.roomhubb2b.listing.ListingRepository;
+import ru.esie.practice.roomhubb2b.listing.ListingStatus;
 import ru.esie.practice.roomhubb2b.listing.availability.dto.BusyIntervalResponseDto;
 import ru.esie.practice.roomhubb2b.listing.availability.dto.ListingAvailabilityResponseDto;
 
@@ -35,7 +36,7 @@ class ListingAvailabilityServiceTest {
         listingRepository = mock(ListingRepository.class);
         periodRepository = mock(ListingUnavailabilityPeriodRepository.class);
         service = new ListingAvailabilityService(listingRepository, periodRepository);
-        when(listingRepository.existsByIdAndStatus(LISTING_ID, "PUBLISHED")).thenReturn(true);
+        when(listingRepository.existsByIdAndStatus(LISTING_ID, ListingStatus.PUBLISHED)).thenReturn(true);
     }
 
     @Test
@@ -44,10 +45,10 @@ class ListingAvailabilityServiceTest {
 
         ListingAvailabilityResponseDto response = service.getAvailability(LISTING_ID, FROM, TO);
 
-        assertEquals(LISTING_ID, response.getListingId());
-        assertEquals("2026-07-02T09:00", response.getFrom());
-        assertEquals("2026-07-02T18:00", response.getTo());
-        assertEquals(List.of(), response.getBusyIntervals());
+        assertEquals(LISTING_ID, response.listingId());
+        assertEquals("2026-07-02T09:00", response.from());
+        assertEquals("2026-07-02T18:00", response.to());
+        assertEquals(List.of(), response.busyIntervals());
     }
 
     @Test
@@ -64,9 +65,9 @@ class ListingAvailabilityServiceTest {
 
         ListingAvailabilityResponseDto response = service.getAvailability(LISTING_ID, FROM, TO);
 
-        assertEquals(2, response.getBusyIntervals().size());
-        assertInterval(response.getBusyIntervals().get(0), "2026-07-02T09:00", "2026-07-02T15:00");
-        assertInterval(response.getBusyIntervals().get(1), "2026-07-02T17:00", "2026-07-02T18:00");
+        assertEquals(2, response.busyIntervals().size());
+        assertInterval(response.busyIntervals().get(0), "2026-07-02T09:00", "2026-07-02T15:00");
+        assertInterval(response.busyIntervals().get(1), "2026-07-02T17:00", "2026-07-02T18:00");
     }
 
     @Test
@@ -82,8 +83,8 @@ class ListingAvailabilityServiceTest {
 
         ListingAvailabilityResponseDto response = service.getAvailability(LISTING_ID, from, to);
 
-        assertEquals(1, response.getBusyIntervals().size());
-        assertInterval(response.getBusyIntervals().get(0), "2026-07-02T22:00", "2026-07-03T02:00");
+        assertEquals(1, response.busyIntervals().size());
+        assertInterval(response.busyIntervals().get(0), "2026-07-02T22:00", "2026-07-03T02:00");
     }
 
     @Test
@@ -93,7 +94,7 @@ class ListingAvailabilityServiceTest {
 
         ListingAvailabilityResponseDto response = service.getAvailability(LISTING_ID, FROM, to);
 
-        assertEquals("2026-10-03T09:00", response.getTo());
+        assertEquals("2026-10-03T09:00", response.to());
     }
 
     @Test
@@ -116,7 +117,7 @@ class ListingAvailabilityServiceTest {
 
     @Test
     void returnsNotFoundForMissingOrUnpublishedListing() {
-        when(listingRepository.existsByIdAndStatus(LISTING_ID, "PUBLISHED")).thenReturn(false);
+        when(listingRepository.existsByIdAndStatus(LISTING_ID, ListingStatus.PUBLISHED)).thenReturn(false);
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
@@ -142,7 +143,7 @@ class ListingAvailabilityServiceTest {
     }
 
     private void assertInterval(BusyIntervalResponseDto interval, String startAt, String endAt) {
-        assertEquals(startAt, interval.getStartAt());
-        assertEquals(endAt, interval.getEndAt());
+        assertEquals(startAt, interval.startAt());
+        assertEquals(endAt, interval.endAt());
     }
 }
