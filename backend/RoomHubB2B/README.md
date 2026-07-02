@@ -22,12 +22,14 @@ password: postgres
 $env:SPRING_DATASOURCE_URL = "jdbc:postgresql://localhost:5432/roomhub_b2b"
 $env:SPRING_DATASOURCE_USERNAME = "postgres"
 $env:SPRING_DATASOURCE_PASSWORD = "postgres"
+$env:ROOMHUB_AUTH_TOKEN_SECRET = "replace-with-at-least-32-random-bytes"
 ```
 
 ```bash
 export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/roomhub_b2b
 export SPRING_DATASOURCE_USERNAME=postgres
 export SPRING_DATASOURCE_PASSWORD=postgres
+export ROOMHUB_AUTH_TOKEN_SECRET=replace-with-at-least-32-random-bytes
 ```
 
 ## Запуск
@@ -43,6 +45,46 @@ Linux/macOS:
 ```bash
 ./mvnw spring-boot:run
 ```
+
+`ROOMHUB_AUTH_TOKEN_SECRET` обязателен и должен содержать не менее 32 байт UTF-8. Значение выше служит только placeholder; для окружения используйте случайный секрет из secret storage. Issuer и TTL можно переопределить через `ROOMHUB_AUTH_TOKEN_ISSUER` и `ROOMHUB_AUTH_TOKEN_TTL` (ISO-8601 duration), по умолчанию используются `roomhub-b2b` и `PT15M`.
+
+## Аутентификация юридического лица
+
+Регистрация создаёт одну организацию и одного основного пользователя с ролью `LANDLORD` или `TENANT`:
+
+```http
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "role": "LANDLORD",
+  "legalName": "ООО Деловой центр",
+  "taxId": "2225123456",
+  "email": "owner@example.com",
+  "password": "S3cure-roomhub-password"
+}
+```
+
+Успешный ответ имеет статус `201` и содержит `userId`, `organizationId`, `role`, `legalName`, `taxId` и `email`, но не содержит пароль или его hash.
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "owner@example.com",
+  "password": "S3cure-roomhub-password"
+}
+```
+
+Ответ `200` содержит `accessToken`, `tokenType: "Bearer"` и `expiresIn: 900`. Текущий профиль доступен по token:
+
+```http
+GET /api/auth/me
+Authorization: Bearer <accessToken>
+```
+
+Регистрация и вход, каталог, availability и `/api/openapi` публичны; остальные application endpoints требуют bearer token. MVP не включает проверку организации через ФНС/ЕГРЮЛ, подтверждение email, восстановление пароля, refresh token, logout, отзыв отдельных token и несколько пользователей или ролей в организации.
 
 ## OpenAPI в runtime
 

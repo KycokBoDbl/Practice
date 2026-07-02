@@ -6,9 +6,21 @@
 
 Из корня проекта выполнить:
 
-```bash
+PowerShell:
+
+```powershell
+$env:ROOMHUB_AUTH_TOKEN_SECRET = "replace-with-at-least-32-random-bytes"
 docker compose up --build
 ```
+
+Linux/macOS:
+
+```bash
+export ROOMHUB_AUTH_TOKEN_SECRET=replace-with-at-least-32-random-bytes
+docker compose up --build
+```
+
+Для production используйте случайный signing secret из secret storage; значения выше являются placeholders.
 
 После успешного запуска приложение будет доступно по адресу:
 
