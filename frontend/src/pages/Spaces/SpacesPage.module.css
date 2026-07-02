@@ -137,33 +137,64 @@
   color: #64748b;
 }
 
-.filters {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
-  gap: 16px;
-  align-items: end;
+.searchArea {
+  position: relative;
   margin: 0 0 24px;
-  padding: 20px;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  background: #ffffff;
 }
 
-.filterField {
+.search {
+  width: 100%;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  font: inherit;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
+.filters {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  z-index: 30;
   display: grid;
-  gap: 8px;
+  grid-template-columns: 1.1fr repeat(2, minmax(150px, 1fr)) auto auto;
+  gap: 12px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.14);
+}
+
+.filterField,
+.rangeField {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
   color: #475569;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
 }
 
 .filterField select,
-.filterField input {
+.filterField input,
+.rangeField input {
   width: 100%;
-  min-height: 42px;
-  padding: 0 12px;
+  min-height: 38px;
+  padding: 0 10px;
   border: 1px solid #cbd5e1;
-  border-radius: 10px;
+  border-radius: 8px;
   background: #ffffff;
   color: #111827;
   font: inherit;
@@ -171,10 +202,34 @@
 }
 
 .filterField select:focus,
-.filterField input:focus {
+.filterField input:focus,
+.rangeField input:focus {
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
   outline: none;
+}
+
+.rangeField {
+  gap: 8px;
+}
+
+.rangeField > span {
+  color: #475569;
+}
+
+.rangeField label {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+}
+
+.rangeField label span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
 }
 
 .filterSummary {
@@ -188,20 +243,45 @@
 }
 
 .resetButton {
+  align-self: end;
   min-height: 38px;
   padding: 0 14px;
   border: 1px solid #cbd5e1;
-  border-radius: 10px;
+  border-radius: 8px;
   background: #ffffff;
   color: #2563eb;
   cursor: pointer;
   font: inherit;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+.resetButton:hover {
+  border-color: #2563eb;
 }
 
 .resetButton:disabled {
   color: #94a3b8;
   cursor: not-allowed;
+}
+
+.searchButton {
+  align-self: end;
+  min-height: 38px;
+  padding: 0 16px;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.searchButton:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
 }
 
 .emptyState {

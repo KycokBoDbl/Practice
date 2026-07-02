@@ -1,10 +1,10 @@
 ## 1. Catalog Search Boundary
 
-- [ ] 1.1 Identify current search/filter URL params and document current behavior before moving logic.
-- [ ] 1.2 Extract catalog query parsing and listing filtering into a catalog-owned utility or hook.
-- [ ] 1.3 Move draft search/filter state and submit/reset behavior out of `Header` into a catalog-owned component or hook.
-- [ ] 1.4 Update `SpacesPage` to use the extracted catalog search/filter boundary while preserving current URL params and filter results.
-- [ ] 1.5 Simplify `Header` so it renders only brand/navigation and no longer imports listing API/types or owns catalog filter state.
+- [x] 1.1 Identify current search/filter URL params and document current behavior before moving logic.
+- [x] 1.2 Extract catalog query parsing and listing filtering into a catalog-owned utility or hook.
+- [x] 1.3 Move draft search/filter state and submit/reset behavior out of `Header` into a catalog-owned component or hook.
+- [x] 1.4 Update `SpacesPage` to use the extracted catalog search/filter boundary while preserving current URL params and filter results.
+- [x] 1.5 Simplify `Header` so it renders only brand/navigation and no longer imports listing API/types or owns catalog filter state.
 
 ## 2. Listing Detail Loading
 
