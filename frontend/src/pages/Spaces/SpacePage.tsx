@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { getListings } from '../../api/listings'
+import { getListing } from '../../api/listings'
 import type { Listing } from '../../types/listing'
 import { SPACE_TYPE_LABELS } from '../../types/spaceType'
 import styles from './SpacePage.module.css'
@@ -15,10 +15,7 @@ export function SpacePage() {
   useEffect(() => {
     async function loadListing() {
       try {
-        const data = await getListings()
-        const foundListing = data.find((item) => String(item.id) === id)
-
-        setListing(foundListing ?? null)
+        setListing(await getListing(id))
       } catch (error) {
         console.error('Ошибка при загрузке помещения:', error)
       } finally {

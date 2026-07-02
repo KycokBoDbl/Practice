@@ -18,6 +18,11 @@ export async function getListings(): Promise<Listing[]> {
   return response.data
 }
 
+export async function getListing(listingId: string | undefined): Promise<Listing | null> {
+  const listings = await getListings()
+  return listings.find((listing) => String(listing.id) === listingId) ?? null
+}
+
 export async function getListingAvailability(
   listingId: number,
   from: string,

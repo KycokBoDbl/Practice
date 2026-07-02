@@ -8,17 +8,17 @@
 
 ## 2. Listing Detail Loading
 
-- [ ] 2.1 Add a centralized `getListing(id)` API function or shared `useListing(id)` fallback based on available backend support.
-- [ ] 2.2 Migrate `SpacePage` to use centralized single-listing loading.
-- [ ] 2.3 Migrate `BookingPage` to use centralized single-listing loading.
-- [ ] 2.4 Remove duplicated `getListings().find(...)` logic from route pages.
+- [x] 2.1 Add a centralized `getListing(id)` API function or shared `useListing(id)` fallback based on available backend support.
+- [x] 2.2 Migrate `SpacePage` to use centralized single-listing loading.
+- [x] 2.3 Migrate `BookingPage` to use centralized single-listing loading.
+- [x] 2.4 Remove duplicated `getListings().find(...)` logic from route pages.
 
 ## 3. BookingPage States
 
-- [ ] 3.1 Add explicit loading state handling to `BookingPage`.
-- [ ] 3.2 Add explicit not-found state after loading completes with no matching listing.
-- [ ] 3.3 Add explicit error state for listing load failures.
-- [ ] 3.4 Verify successful listing load still renders the existing booking page content.
+- [x] 3.1 Add explicit loading state handling to `BookingPage`.
+- [x] 3.2 Add explicit not-found state after loading completes with no matching listing.
+- [x] 3.3 Add explicit error state for listing load failures.
+- [x] 3.4 Verify successful listing load still renders the existing booking page content.
 
 ## 4. BookingCalendar Decomposition
 
