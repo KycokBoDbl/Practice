@@ -30,7 +30,4 @@ Thumbs.db
 *.pid
 
 # AI tools
-.codex/
-openspec/
 .mcp/
-AGENTS.md
