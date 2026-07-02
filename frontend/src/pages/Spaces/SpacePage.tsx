@@ -92,7 +92,6 @@ export function SpacePage() {
         </section>
 
         <section className={styles.calendarSection}>
-          <section className={styles.calendarSection}>
             <BookingCalendar
               listingId={listing.id}
               pricePerHour={listing.pricePerHour}
@@ -102,7 +101,6 @@ export function SpacePage() {
             <Link to={`/booking/${listing.id}`} className={styles.button}>
               Забронировать
             </Link>
-          </section>
         </section>
       </div>
     </main>

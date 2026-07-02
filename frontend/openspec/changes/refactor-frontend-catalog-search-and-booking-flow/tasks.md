@@ -38,8 +38,8 @@
 
 ## 6. Cleanup and Verification
 
-- [ ] 6.1 Remove accidental duplicate semantic wrappers such as nested `calendarSection` containers if still present.
-- [ ] 6.2 Fix heading hierarchy issues introduced or preserved during extraction.
-- [ ] 6.3 Run `npm run lint` and resolve remaining lint errors related to the refactor.
-- [ ] 6.4 Run `npm run build` in an environment that can write TypeScript build info.
-- [ ] 6.5 Manually smoke-check catalog filtering, listing detail navigation, booking page loading states, and booking calendar preview/booking modes.
+- [x] 6.1 Remove accidental duplicate semantic wrappers such as nested `calendarSection` containers if still present.
+- [x] 6.2 Fix heading hierarchy issues introduced or preserved during extraction.
+- [x] 6.3 Run `npm run lint` and resolve remaining lint errors related to the refactor.
+- [x] 6.4 Run `npm run build` in an environment that can write TypeScript build info.
+- [x] 6.5 Manually smoke-check catalog filtering, listing detail navigation, booking page loading states, and booking calendar preview/booking modes.
