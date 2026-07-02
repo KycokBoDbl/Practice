@@ -25,13 +25,16 @@ public class ListingEntity {
 
     private Integer capacity;
 
-    @Column(name = "space_type")
-    private String spaceType;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "space_type", nullable = false, length = 100)
+    private SpaceType spaceType;
 
     @Column(name = "image_url")
     private String imageUrl;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private ListingStatus status;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -64,7 +67,7 @@ public class ListingEntity {
         return capacity;
     }
 
-    public String getSpaceType() {
+    public SpaceType getSpaceType() {
         return spaceType;
     }
 
@@ -72,7 +75,7 @@ public class ListingEntity {
         return imageUrl;
     }
 
-    public String getStatus() {
+    public ListingStatus getStatus() {
         return status;
     }
 

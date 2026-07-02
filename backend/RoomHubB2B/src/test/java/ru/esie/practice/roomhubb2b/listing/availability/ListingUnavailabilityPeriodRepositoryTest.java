@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 import ru.esie.practice.roomhubb2b.listing.ListingRepository;
+import ru.esie.practice.roomhubb2b.listing.ListingStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,7 +29,7 @@ class ListingUnavailabilityPeriodRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        listingId = listingRepository.findByStatus("PUBLISHED").get(0).getId();
+        listingId = listingRepository.findByStatus(ListingStatus.PUBLISHED).get(0).getId();
     }
 
     @Test
