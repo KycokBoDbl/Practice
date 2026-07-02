@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { getListings } from '../../api/listings'
+import { getListing } from '../../api/listings'
 import type { Listing } from '../../types/listing'
-import { SPACE_TYPE_LABELS } from '../../types/spaceType'
+import { getSpaceTypeLabel } from '../../types/spaceType'
 import styles from './SpacePage.module.css'
 import { BookingCalendar } from '../../components/BookingCalendar/BookingCalendar'
 
@@ -15,10 +15,7 @@ export function SpacePage() {
   useEffect(() => {
     async function loadListing() {
       try {
-        const data = await getListings()
-        const foundListing = data.find((item) => String(item.id) === id)
-
-        setListing(foundListing ?? null)
+        setListing(await getListing(id))
       } catch (error) {
         console.error('Ошибка при загрузке помещения:', error)
       } finally {
@@ -84,7 +81,7 @@ export function SpacePage() {
               <div className={styles.metaCard}>
                 <p className={styles.metaLabel}>Тип помещения</p>
                 <p className={styles.metaValue}>
-                  {SPACE_TYPE_LABELS[listing.spaceType] ?? listing.spaceType}
+                  {getSpaceTypeLabel(listing.spaceType)}
                 </p>
               </div>
             </div>
@@ -95,7 +92,6 @@ export function SpacePage() {
         </section>
 
         <section className={styles.calendarSection}>
-          <section className={styles.calendarSection}>
             <BookingCalendar
               listingId={listing.id}
               pricePerHour={listing.pricePerHour}
@@ -105,7 +101,6 @@ export function SpacePage() {
             <Link to={`/booking/${listing.id}`} className={styles.button}>
               Забронировать
             </Link>
-          </section>
         </section>
       </div>
     </main>

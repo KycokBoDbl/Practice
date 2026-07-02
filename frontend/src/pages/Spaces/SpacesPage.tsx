@@ -1,89 +1,48 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { getListings } from "../../api/listings";
-import type { Listing } from "../../types/listing";
-import { SPACE_TYPE_LABELS } from "../../types/spaceType";
+
+import { getListings } from '../../api/listings'
+import type { Listing } from '../../types/listing'
+import { getSpaceTypeLabel } from '../../types/spaceType'
+import { CatalogSearch } from './CatalogSearch'
+import { filterCatalogListings, parseCatalogQuery } from './catalogFilters'
 import styles from './SpacesPage.module.css'
 
-
 export function SpacesPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [listings, setListings] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState(true);
-  const searchQuery = (searchParams.get('q') ?? '').trim().toLowerCase();
-  const searchTokens = useMemo(
-    () => searchQuery.split(/\s+/).filter((token) => token.length >= 3),
-    [searchQuery],
-  );
-  const selectedCity = searchParams.get('city') ?? '';
-  const minCapacity = searchParams.get('minCapacity') ?? '';
-  const maxCapacity = searchParams.get('maxCapacity') ?? '';
-  const minPrice = searchParams.get('minPrice') ?? '';
-  const maxPrice = searchParams.get('maxPrice') ?? '';
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [listings, setListings] = useState<Listing[]>([])
+  const [loading, setLoading] = useState(true)
+  const catalogQuery = useMemo(
+    () => parseCatalogQuery(searchParams),
+    [searchParams],
+  )
 
   useEffect(() => {
     async function loadListings() {
       try {
-        const data = await getListings();
-        setListings(data);
+        const data = await getListings()
+        setListings(data)
       } catch (error) {
-        console.error("Ошибка при загрузке помещений:", error);
+        console.error('Ошибка при загрузке помещений:', error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     }
 
-    loadListings();
-  }, []);
+    loadListings()
+  }, [])
 
-  const filteredListings = useMemo(() => {
-    const minCapacityValue = Number(minCapacity);
-    const maxCapacityValue = Number(maxCapacity);
-    const minPriceValue = Number(minPrice);
-    const maxPriceValue = Number(maxPrice);
-
-    return listings.filter((listing) => {
-      const searchText = [
-        listing.title,
-        listing.description,
-        listing.city,
-        listing.address,
-        listing.spaceType,
-        SPACE_TYPE_LABELS[listing.spaceType],
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      const matchesSearch =
-        searchTokens.length === 0 ||
-        searchTokens.every((token) => searchText.includes(token));
-      const matchesCity = selectedCity === '' || listing.city === selectedCity;
-      const matchesMinCapacity =
-        minCapacity === '' || listing.capacity >= minCapacityValue;
-      const matchesMaxCapacity =
-        maxCapacity === '' || listing.capacity <= maxCapacityValue;
-      const matchesMinPrice =
-        minPrice === '' || listing.pricePerHour >= minPriceValue;
-      const matchesMaxPrice =
-        maxPrice === '' || listing.pricePerHour <= maxPriceValue;
-
-      return (
-        matchesSearch &&
-        matchesCity &&
-        matchesMinCapacity &&
-        matchesMaxCapacity &&
-        matchesMinPrice &&
-        matchesMaxPrice
-      );
-    });
-  }, [listings, maxCapacity, maxPrice, minCapacity, minPrice, searchTokens, selectedCity]);
+  const filteredListings = useMemo(
+    () => filterCatalogListings(listings, catalogQuery),
+    [catalogQuery, listings],
+  )
 
   function resetFilters() {
-    setSearchParams({});
+    setSearchParams({})
   }
 
   if (loading) {
-    return <p>Загрузка помещений...</p>;
+    return <p>Загрузка помещений...</p>
   }
 
   return (
@@ -101,7 +60,7 @@ export function SpacesPage() {
           <div className={styles.feature}>
             <span className={styles.featureIcon}>🏢</span>
             <div>
-              <h1>Разные типы помещений</h1>
+              <h3>Разные типы помещений</h3>
               <p>Переговорные, конференц-залы, классы, лофты и шоурумы.</p>
             </div>
           </div>
@@ -109,7 +68,7 @@ export function SpacesPage() {
           <div className={styles.feature}>
             <span className={styles.featureIcon}>📍</span>
             <div>
-              <h1>Несколько городов</h1>
+              <h3>Несколько городов</h3>
               <p>Выбирайте площадки в Москве, Санкт-Петербурге, Казани и других городах.</p>
             </div>
           </div>
@@ -117,7 +76,7 @@ export function SpacesPage() {
           <div className={styles.feature}>
             <span className={styles.featureIcon}>🕒</span>
             <div>
-              <h1>Почасовая аренда</h1>
+              <h3>Почасовая аренда</h3>
               <p>Сравнивайте стоимость и подбирайте помещение под нужное время.</p>
             </div>
           </div>
@@ -130,6 +89,8 @@ export function SpacesPage() {
           <p>Выберите подходящее пространство и перейдите к подробному описанию.</p>
         </div>
       </section>
+
+      <CatalogSearch listings={listings} />
 
       {listings.length === 0 ? (
         <p>Помещений пока нет.</p>
@@ -160,7 +121,7 @@ export function SpacesPage() {
                 <p className={styles.meta}>📍 {listing.city}</p>
                 <p className={styles.meta}>👥 до {listing.capacity} человек</p>
                 <p className={styles.meta}>
-                  🏢 {SPACE_TYPE_LABELS[listing.spaceType] ?? listing.spaceType}
+                  🏢 {getSpaceTypeLabel(listing.spaceType)}
                 </p>
 
                 <div className={styles.price}>
