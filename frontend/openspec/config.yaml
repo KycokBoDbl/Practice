@@ -1,0 +1,38 @@
+schema: spec-driven
+
+context: |
+  Project: RoomHub B2B Frontend
+
+  Stack:
+  - React
+  - TypeScript
+  - Vite
+  - React Router
+  - CSS Modules
+
+  Responsibilities:
+  - Pages orchestrate business scenarios.
+  - Components contain reusable UI.
+  - API communication is implemented in src/api.
+  - Shared domain types are stored in src/types.
+
+  Current goals:
+  - Keep business logic outside layout components.
+  - Prefer reusable hooks for shared logic.
+  - Preserve current UX during refactoring.
+  - Implement changes incrementally.
+  - Validate with lint and build after each task.
+
+rules:
+  proposal:
+    - Focus only on frontend changes.
+    - Do not describe backend implementation unless API changes are required.
+    - Describe user-visible impact.
+
+  design:
+    - Explain architectural decisions.
+    - Preserve existing behavior whenever possible.
+
+  tasks:
+    - Break work into small independently testable steps.
+    - Prefer one logical change per task.

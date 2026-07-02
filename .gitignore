@@ -28,3 +28,6 @@ Thumbs.db
 
 # Docker
 *.pid
+
+# AI tools
+.mcp/
