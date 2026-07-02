@@ -1,3 +1,5 @@
+import type { SpaceType } from './spaceType'
+
 export interface Listing {
   id: number
   title: string
@@ -6,6 +8,6 @@ export interface Listing {
   address: string
   pricePerHour: number
   capacity: number
-  spaceType: string
+  spaceType: SpaceType
   imageUrl: string
 }

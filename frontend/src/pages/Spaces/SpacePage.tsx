@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 
 import { getListing } from '../../api/listings'
 import type { Listing } from '../../types/listing'
-import { SPACE_TYPE_LABELS } from '../../types/spaceType'
+import { getSpaceTypeLabel } from '../../types/spaceType'
 import styles from './SpacePage.module.css'
 import { BookingCalendar } from '../../components/BookingCalendar/BookingCalendar'
 
@@ -81,7 +81,7 @@ export function SpacePage() {
               <div className={styles.metaCard}>
                 <p className={styles.metaLabel}>Тип помещения</p>
                 <p className={styles.metaValue}>
-                  {SPACE_TYPE_LABELS[listing.spaceType] ?? listing.spaceType}
+                  {getSpaceTypeLabel(listing.spaceType)}
                 </p>
               </div>
             </div>

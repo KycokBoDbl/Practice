@@ -22,19 +22,19 @@
 
 ## 4. BookingCalendar Decomposition
 
-- [ ] 4.1 Extract booking constants such as working hours and allowed durations from the main calendar rendering component.
-- [ ] 4.2 Extract pure date/time and slot status helpers from `BookingCalendar`.
-- [ ] 4.3 Extract availability loading into a dedicated hook or data boundary.
-- [ ] 4.4 Refactor selected slot and duration handling to remove lint-confirmed synchronous effect-state corrections where practical.
-- [ ] 4.5 Split presentational calendar sections into smaller components without changing visible behavior.
-- [ ] 4.6 Verify preview mode and booking mode still preserve existing behavior.
+- [x] 4.1 Extract booking constants such as working hours and allowed durations from the main calendar rendering component.
+- [x] 4.2 Extract pure date/time and slot status helpers from `BookingCalendar`.
+- [x] 4.3 Extract availability loading into a dedicated hook or data boundary.
+- [x] 4.4 Refactor selected slot and duration handling to remove lint-confirmed synchronous effect-state corrections where practical.
+- [x] 4.5 Split presentational calendar sections into smaller components without changing visible behavior.
+- [x] 4.6 Verify preview mode and booking mode still preserve existing behavior.
 
 ## 5. Domain Typing
 
-- [ ] 5.1 Convert `SPACE_TYPE_LABELS` to a typed constant map.
-- [ ] 5.2 Introduce a known `SpaceType` union or equivalent derived type.
-- [ ] 5.3 Update `Listing.spaceType` and label lookups to use stronger typing while keeping a safe fallback for unknown backend values.
-- [ ] 5.4 Verify catalog cards and detail pages still display space type labels correctly.
+- [x] 5.1 Convert `SPACE_TYPE_LABELS` to a typed constant map.
+- [x] 5.2 Introduce a known `SpaceType` union or equivalent derived type.
+- [x] 5.3 Update `Listing.spaceType` and label lookups to use stronger typing while keeping a safe fallback for unknown backend values.
+- [x] 5.4 Verify catalog cards and detail pages still display space type labels correctly.
 
 ## 6. Cleanup and Verification
 

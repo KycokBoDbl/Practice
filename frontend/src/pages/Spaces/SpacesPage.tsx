@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from 'react-router-dom'
 import { getListings } from "../../api/listings";
 import type { Listing } from "../../types/listing";
-import { SPACE_TYPE_LABELS } from "../../types/spaceType";
+import { getSpaceTypeLabel } from "../../types/spaceType";
 import styles from './SpacesPage.module.css'
 
 
@@ -49,7 +49,7 @@ export function SpacesPage() {
         listing.city,
         listing.address,
         listing.spaceType,
-        SPACE_TYPE_LABELS[listing.spaceType],
+        getSpaceTypeLabel(listing.spaceType),
       ]
         .filter(Boolean)
         .join(' ')
@@ -160,7 +160,7 @@ export function SpacesPage() {
                 <p className={styles.meta}>📍 {listing.city}</p>
                 <p className={styles.meta}>👥 до {listing.capacity} человек</p>
                 <p className={styles.meta}>
-                  🏢 {SPACE_TYPE_LABELS[listing.spaceType] ?? listing.spaceType}
+                  🏢 {getSpaceTypeLabel(listing.spaceType)}
                 </p>
 
                 <div className={styles.price}>
