@@ -127,4 +127,33 @@ class OpenApiContractTests {
                 .andExpect(jsonPath("$['paths']['/api/listings']['get'].security").doesNotExist())
                 .andExpect(jsonPath("$['paths']['/api/listings/{listingId}/availability']['get'].security").doesNotExist());
     }
+
+    @Test
+    void exposesProtectedBookingWorkflowContract() throws Exception {
+        String create = "$['paths']['/api/bookings']['post']";
+        String booking = "$['paths']['/api/bookings/{bookingId}']['get']";
+        String history = "$['paths']['/api/bookings/{bookingId}/history']['get']";
+
+        mockMvc.perform(get("/api/openapi").accept("application/json"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(create + ".security[0].bearerAuth").isArray())
+                .andExpect(jsonPath(create + ".requestBody.content['application/json'].schema['$ref']")
+                        .value("#/components/schemas/CreateBookingRequestDto"))
+                .andExpect(jsonPath(create + ".responses['201']").exists())
+                .andExpect(jsonPath(create + ".responses['400']").exists())
+                .andExpect(jsonPath(create + ".responses['401']").exists())
+                .andExpect(jsonPath(create + ".responses['403']").exists())
+                .andExpect(jsonPath(create + ".responses['404']").exists())
+                .andExpect(jsonPath(create + ".responses['409']").exists())
+                .andExpect(jsonPath(booking).exists())
+                .andExpect(jsonPath(history).exists())
+                .andExpect(jsonPath("$['paths']['/api/bookings/{bookingId}/approve']['post']").exists())
+                .andExpect(jsonPath("$['paths']['/api/bookings/{bookingId}/reject']['post']").exists())
+                .andExpect(jsonPath("$['paths']['/api/bookings/{bookingId}/confirm']['post']").exists())
+                .andExpect(jsonPath("$['paths']['/api/bookings/{bookingId}/cancel']['post']").exists())
+                .andExpect(jsonPath("$.components.schemas.CreateBookingRequestDto.properties.tenantOrganizationId")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationId")
+                        .doesNotExist());
+    }
 }

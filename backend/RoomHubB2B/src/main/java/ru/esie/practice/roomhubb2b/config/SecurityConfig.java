@@ -31,7 +31,7 @@ import java.time.Clock;
 import java.util.List;
 
 @Configuration
-@EnableConfigurationProperties(TokenProperties.class)
+@EnableConfigurationProperties({TokenProperties.class, BookingProperties.class})
 @EnableMethodSecurity
 public class SecurityConfig {
 

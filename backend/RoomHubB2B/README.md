@@ -86,6 +86,64 @@ Authorization: Bearer <accessToken>
 
 Регистрация и вход, каталог, availability и `/api/openapi` публичны; остальные application endpoints требуют bearer token. MVP не включает проверку организации через ФНС/ЕГРЮЛ, подтверждение email, восстановление пароля, refresh token, logout, отзыв отдельных token и несколько пользователей или ролей в организации.
 
+## Бронирование
+
+Booking API использует две зарегистрированные организации. `TENANT` создаёт, подтверждает и отменяет собственную заявку; `LANDLORD` может одобрить или отклонить только заявку на принадлежащее его организации объявление. Идентификаторы участников берутся из JWT и не передаются в request body.
+
+Публичного API создания и назначения владельца объявления пока нет. Для локального smoke flow назначьте существующий listing зарегистрированной организации-арендодателю операционной SQL-командой:
+
+```sql
+UPDATE listings
+SET owner_organization_id = :landlordOrganizationId
+WHERE id = :listingId;
+```
+
+Создание заявки:
+
+```http
+POST /api/bookings
+Authorization: Bearer <tenantAccessToken>
+Content-Type: application/json
+
+{
+  "listingId": 42,
+  "startAt": "2030-07-10T10:00",
+  "endAt": "2030-07-10T13:00"
+}
+```
+
+Арендодатель удерживает свободный слот на 30 минут, но не позже начала аренды:
+
+```http
+POST /api/bookings/81/approve
+Authorization: Bearer <landlordAccessToken>
+```
+
+Арендатор подтверждает либо отменяет сделку:
+
+```http
+POST /api/bookings/81/confirm
+Authorization: Bearer <tenantAccessToken>
+```
+
+```http
+POST /api/bookings/81/cancel
+Authorization: Bearer <tenantAccessToken>
+```
+
+Переходы состояния:
+
+```text
+REQUESTED --approve--> AWAITING_CONFIRMATION --confirm--> CONFIRMED
+    |                         |                           |
+    +--reject--> REJECTED     +--expire--> EXPIRED       +--start--> IN_PROGRESS
+    |                         |                           |               |
+    +--cancel--> CANCELLED    +--cancel--> CANCELLED     +--cancel       +--finish--> COMPLETED
+                                                          before start
+```
+
+Одобрение атомарно проверяет общий календарь `listing_unavailability_periods`. При двух конкурентных заявках на пересекающееся время слот получает только одна; вторая получает `409 Conflict`. Booking и его история доступны только tenant organization сделки и landlord organization исходного listing.
+
 ## OpenAPI в runtime
 
 Запущенный backend отдаёт актуальный OpenAPI 3 JSON:
