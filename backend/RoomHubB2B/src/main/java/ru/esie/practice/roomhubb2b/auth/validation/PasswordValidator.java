@@ -14,6 +14,6 @@ public class PasswordValidator implements ConstraintValidator<ValidPassword, Str
         }
         int characters = value.codePointCount(0, value.length());
         int bytes = value.getBytes(StandardCharsets.UTF_8).length;
-        return characters >= 12 && characters <= 64 && bytes <= 72;
+        return characters >= 8 && characters <= 64 && bytes <= 72;
     }
 }
