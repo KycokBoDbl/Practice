@@ -16,6 +16,10 @@ interface RegisterFormErrors {
   form?: string
 }
 
+const PASSWORD_MIN_LENGTH = 8
+const PASSWORD_MAX_LENGTH = 64
+const PASSWORD_ERROR_MESSAGE = `Пароль должен содержать от ${PASSWORD_MIN_LENGTH} до ${PASSWORD_MAX_LENGTH} символов.`
+
 const ROLE_OPTIONS: Array<{ value: UserRole; label: string }> = [
   { value: 'TENANT', label: 'Арендатор' },
   { value: 'LANDLORD', label: 'Арендодатель' },
@@ -36,10 +40,14 @@ function getRegistrationFieldError(
   }
 
   if (fieldName === 'password') {
-    return 'Пароль должен содержать от 8 до 64 символов.'
+    return PASSWORD_ERROR_MESSAGE
   }
 
   return message
+}
+
+function validatePassword(password: string) {
+  return password.length >= PASSWORD_MIN_LENGTH && password.length <= PASSWORD_MAX_LENGTH
 }
 
 export function RegisterPage() {
@@ -55,6 +63,11 @@ export function RegisterPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    if (!validatePassword(password)) {
+      setErrors({ password: PASSWORD_ERROR_MESSAGE })
+      return
+    }
 
     setSubmitting(true)
     setErrors({})
@@ -181,6 +194,8 @@ export function RegisterPage() {
               type="password"
               name="password"
               autoComplete="new-password"
+              minLength={PASSWORD_MIN_LENGTH}
+              maxLength={PASSWORD_MAX_LENGTH}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               aria-invalid={errors.password ? 'true' : undefined}
