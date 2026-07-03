@@ -2,20 +2,53 @@
 
 ### Requirement: Создание заявки на бронирование
 
-Система SHALL предоставлять `POST /api/bookings` для создания заявки на существующее объявление со статусом `PUBLISHED`. Запрашиваемый полуоткрытый интервал `[startAt, endAt)` MUST находиться в будущем, иметь `endAt` позже `startAt` и быть выровнен по целому часу.
+Система SHALL предоставлять `POST /api/bookings` аутентифицированному пользователю с ролью `TENANT` для создания заявки на существующее объявление со статусом `PUBLISHED` и назначенной организацией-владельцем. Организация арендатора MUST определяться из проверенного JWT и MUST NOT приниматься из request body. Запрашиваемый полуоткрытый интервал `[startAt, endAt)` MUST находиться в будущем, иметь `endAt` позже `startAt` и быть выровнен по целому часу.
 
 #### Scenario: Корректная заявка создана
-- **WHEN** клиент отправляет существующий `listingId` и будущий почасовой интервал
+- **WHEN** аутентифицированный `TENANT` отправляет существующий `listingId` и будущий почасовой интервал
 - **THEN** система отвечает `201 Created` и создаёт booking в состоянии `REQUESTED`
+- **THEN** booking связан с organizationId из проверенного token, даже если клиент пытается передать идентификатор другой организации дополнительным полем
 - **THEN** response содержит id, listingId, status, startAt, endAt, pricePerHour, totalPrice и пустой confirmationDeadline
 
 #### Scenario: Объявление недоступно для бронирования
-- **WHEN** listing отсутствует либо имеет статус, отличный от `PUBLISHED`
+- **WHEN** listing отсутствует, имеет статус, отличный от `PUBLISHED`, либо не имеет назначенной организации-владельца
 - **THEN** система отвечает `404 Not Found` и не создаёт booking
 
 #### Scenario: Интервал заявки некорректен
 - **WHEN** граница содержит минуты, секунды или доли секунды, `endAt <= startAt` либо `startAt <= now`
 - **THEN** система отвечает `400 Bad Request` и не создаёт booking
+
+#### Scenario: Неверная роль создаёт заявку
+- **WHEN** аутентифицированный пользователь с ролью `LANDLORD` вызывает `POST /api/bookings`
+- **THEN** система отвечает `403 Forbidden` и не создаёт booking
+
+### Requirement: Авторизация участников сделки
+
+Все booking endpoints MUST требовать валидный bearer token. Система MUST разрешать `approve` и `reject` только роли `LANDLORD` организации-владельца listing, а `confirm` и `cancel` — только роли `TENANT` организации, сохранённой в booking. `GET /api/bookings/{bookingId}` и `/history` MUST быть доступны только этим двум организациям.
+
+#### Scenario: Владелец объявления обрабатывает заявку
+- **WHEN** `LANDLORD`, чей organizationId совпадает с `listing.ownerOrganizationId`, вызывает approve или reject
+- **THEN** система выполняет соответствующую команду по правилам текущего состояния
+
+#### Scenario: Арендатор подтверждает или отменяет свою заявку
+- **WHEN** `TENANT`, чей organizationId совпадает с `booking.tenantOrganizationId`, вызывает confirm или cancel
+- **THEN** система выполняет соответствующую команду по правилам текущего состояния
+
+#### Scenario: Операция вызвана без аутентификации
+- **WHEN** booking endpoint вызывается без token либо с невалидным/просроченным token
+- **THEN** система отвечает `401 Unauthorized` в существующем формате `ProblemDetail`
+
+#### Scenario: Операция не соответствует роли
+- **WHEN** `TENANT` вызывает approve/reject либо `LANDLORD` вызывает confirm/cancel
+- **THEN** система отвечает `403 Forbidden` и не изменяет booking, календарь или историю
+
+#### Scenario: Пользователь допустимой роли обращается к чужой сделке
+- **WHEN** аутентифицированный пользователь имеет требуемую для операции роль, но его organizationId не является организацией соответствующего участника
+- **THEN** система отвечает `404 Not Found` и не раскрывает существование или данные чужого booking
+
+#### Scenario: Оба участника читают сделку
+- **WHEN** booking или его историю запрашивает tenant organization сделки либо landlord organization исходного listing
+- **THEN** система отвечает `200 OK`
 
 ### Requirement: Фиксация стоимости сделки
 
@@ -171,9 +204,14 @@
 - **WHEN** frontend запрашивает availability после добавления booking workflow
 - **THEN** response по-прежнему содержит listingId, from, to и busyIntervals с startAt/endAt
 
+#### Scenario: Контракт публичного каталога сохранён
+- **WHEN** frontend запрашивает `GET /api/listings` после добавления ownership
+- **THEN** каждый объект по-прежнему соответствует `ListingResponseDto` с полями id, title, city, pricePerHour, capacity, spaceType, imageUrl, description и address
+- **THEN** внутренний ownerOrganizationId отсутствует в response
+
 ### Requirement: Чтение сделки и обработка ошибок
 
-Система SHALL предоставлять `GET /api/bookings/{bookingId}` и SHALL возвращать `404 Not Found` для отсутствующего booking. Ошибки формата и валидации SHALL возвращать `400 Bad Request`, конфликт состояния или календаря SHALL возвращать `409 Conflict`.
+Система SHALL предоставлять `GET /api/bookings/{bookingId}` и SHALL возвращать `404 Not Found` для отсутствующего или недоступного текущей организации booking. Ошибки формата и валидации SHALL возвращать `400 Bad Request`, отсутствие аутентификации SHALL возвращать `401 Unauthorized`, неверная роль SHALL возвращать `403 Forbidden`, конфликт состояния или календаря SHALL возвращать `409 Conflict`.
 
 #### Scenario: Текущее состояние прочитано
 - **WHEN** клиент запрашивает существующий booking
