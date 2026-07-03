@@ -28,12 +28,23 @@
   font-weight: 500;
 }
 
-.link:hover {
+.link:hover,
+.linkButton:hover {
   color: #2563eb;
 }
 
 .active {
   color: #2563eb;
+}
+
+.linkButton {
+  background: none;
+  border: 0;
+  color: #374151;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 500;
+  padding: 0;
 }
 
 @media (max-width: 900px) {

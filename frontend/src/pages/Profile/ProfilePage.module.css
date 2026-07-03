@@ -1,0 +1,39 @@
+.page {
+  padding: 48px 32px;
+}
+
+.panel {
+  margin: 0 auto;
+  max-width: 720px;
+}
+
+.panel h1 {
+  margin: 0 0 24px;
+}
+
+.details {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+}
+
+.details div {
+  border-bottom: 1px solid #e5e7eb;
+  display: grid;
+  gap: 6px;
+  padding-bottom: 16px;
+}
+
+.details dt {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.details dd {
+  color: #111827;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
