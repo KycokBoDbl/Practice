@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.esie.practice.roomhubb2b.auth.AccountNotFoundException;
 import ru.esie.practice.roomhubb2b.auth.InvalidCredentialsException;
 import ru.esie.practice.roomhubb2b.auth.RegistrationConflictException;
+import ru.esie.practice.roomhubb2b.booking.BookingConflictException;
+import ru.esie.practice.roomhubb2b.booking.BookingForbiddenException;
+import ru.esie.practice.roomhubb2b.booking.BookingNotFoundException;
 
 import java.net.URI;
 import java.util.List;
@@ -39,6 +42,26 @@ public class ApiExceptionHandler {
     @ExceptionHandler(RegistrationConflictException.class)
     ProblemDetail handleConflict(RegistrationConflictException exception, HttpServletRequest request) {
         return problem(HttpStatus.CONFLICT, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(BookingConflictException.class)
+    ProblemDetail handleBookingConflict(BookingConflictException exception, HttpServletRequest request) {
+        return problem(HttpStatus.CONFLICT, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(BookingNotFoundException.class)
+    ProblemDetail handleBookingNotFound(BookingNotFoundException exception, HttpServletRequest request) {
+        return problem(HttpStatus.NOT_FOUND, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(BookingForbiddenException.class)
+    ProblemDetail handleBookingForbidden(BookingForbiddenException exception, HttpServletRequest request) {
+        return problem(HttpStatus.FORBIDDEN, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    ProblemDetail handleIllegalArgument(IllegalArgumentException exception, HttpServletRequest request) {
+        return problem(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
     }
 
     @ExceptionHandler({InvalidCredentialsException.class, AccountNotFoundException.class})

@@ -1,6 +1,7 @@
 package ru.esie.practice.roomhubb2b.listing;
 
 import jakarta.persistence.*;
+import ru.esie.practice.roomhubb2b.auth.OrganizationEntity;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -38,6 +39,10 @@ public class ListingEntity {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_organization_id")
+    private OrganizationEntity ownerOrganization;
 
     public Long getId() {
         return id;
@@ -81,5 +86,13 @@ public class ListingEntity {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public OrganizationEntity getOwnerOrganization() {
+        return ownerOrganization;
+    }
+
+    public void assignOwner(OrganizationEntity ownerOrganization) {
+        this.ownerOrganization = ownerOrganization;
     }
 }
