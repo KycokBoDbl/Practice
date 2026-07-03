@@ -99,4 +99,32 @@ class OpenApiContractTests {
                 .andExpect(jsonPath("$[0].description").exists())
                 .andExpect(jsonPath("$[0].address").exists());
     }
+
+    @Test
+    void exposesAuthenticationContractAndSecurityBoundaries() throws Exception {
+        String register = "$['paths']['/api/auth/register']['post']";
+        String login = "$['paths']['/api/auth/login']['post']";
+        String me = "$['paths']['/api/auth/me']['get']";
+
+        mockMvc.perform(get("/api/openapi").accept("application/json"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(register).exists())
+                .andExpect(jsonPath(register + ".security").doesNotExist())
+                .andExpect(jsonPath(register + ".responses['400']").exists())
+                .andExpect(jsonPath(register + ".responses['409']").exists())
+                .andExpect(jsonPath(login).exists())
+                .andExpect(jsonPath(login + ".security").doesNotExist())
+                .andExpect(jsonPath(login + ".responses['400']").exists())
+                .andExpect(jsonPath(login + ".responses['401']").exists())
+                .andExpect(jsonPath(me).exists())
+                .andExpect(jsonPath(me + ".security[0].bearerAuth").isArray())
+                .andExpect(jsonPath(me + ".responses['401']").exists())
+                .andExpect(jsonPath(me + ".responses['403']").exists())
+                .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.type").value("http"))
+                .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.scheme").value("bearer"))
+                .andExpect(jsonPath("$.components.schemas.RegisterRequestDto.properties.password.writeOnly").value(true))
+                .andExpect(jsonPath("$.components.schemas.ProfileResponseDto.properties.passwordHash").doesNotExist())
+                .andExpect(jsonPath("$['paths']['/api/listings']['get'].security").doesNotExist())
+                .andExpect(jsonPath("$['paths']['/api/listings/{listingId}/availability']['get'].security").doesNotExist());
+    }
 }
