@@ -7,6 +7,7 @@ import { LoginPage } from '../pages/Login/LoginPage'
 import { RegisterPage } from '../pages/Register/RegisterPage'
 import { SpacesPage } from '../pages/Spaces/SpacesPage'
 import { BookingPage } from '../pages/Booking/BookingPage'
+import { BookingDetailPage } from '../pages/BookingDetail/BookingDetailPage'
 import { ProfilePage } from '../pages/Profile/ProfilePage'
 import { SpacePage } from '../pages/Spaces/SpacePage'
 
@@ -51,6 +52,14 @@ export const router = createBrowserRouter([
       {
         path: 'booking/:id',
         element: <BookingPage />,
+      },
+      {
+        path: 'bookings/:bookingId',
+        element: (
+          <RequireAuth>
+            <BookingDetailPage />
+          </RequireAuth>
+        ),
       },
       {
         path: 'profile',

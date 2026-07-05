@@ -3,7 +3,11 @@ import { useEffect, useState } from 'react'
 import { getListingAvailability, type BusyInterval } from '../../api/listings'
 import { toDateValue } from './utils'
 
-export function useListingAvailability(listingId: number, visibleMonth: Date) {
+export function useListingAvailability(
+  listingId: number,
+  visibleMonth: Date,
+  refreshKey = 0,
+) {
   const [busyIntervals, setBusyIntervals] = useState<BusyInterval[]>([])
   const [availabilityLoading, setAvailabilityLoading] = useState(false)
 
@@ -39,7 +43,7 @@ export function useListingAvailability(listingId: number, visibleMonth: Date) {
     }
 
     loadAvailability()
-  }, [listingId, visibleMonth])
+  }, [listingId, refreshKey, visibleMonth])
 
   return {
     availabilityLoading,

@@ -1,0 +1,108 @@
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.panel {
+  padding: 28px;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 32px;
+}
+
+.subtitle {
+  margin: 0 0 24px;
+  color: #64748b;
+}
+
+.stateBox {
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: 12px;
+}
+
+.success {
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+}
+
+.warning {
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+}
+
+.error {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+}
+
+.detailsGrid {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.detailsGrid div {
+  display: grid;
+  gap: 4px;
+}
+
+.detailsGrid dt,
+.historyLabel {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.detailsGrid dd,
+.historyValue {
+  margin: 0;
+  font-weight: 700;
+}
+
+.sectionTitle {
+  margin: 28px 0 12px;
+  font-size: 22px;
+}
+
+.historyList {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historyItem {
+  padding: 14px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fafafa;
+}
+
+.historyTop {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 8px;
+}
+
+.historyReason {
+  margin: 0;
+  color: #334155;
+}

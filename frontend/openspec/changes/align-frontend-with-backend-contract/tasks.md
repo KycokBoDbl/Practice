@@ -1,39 +1,39 @@
 ## 1. Booking Contract Types and API
 
-- [ ] 1.1 Add booking domain types for statuses, create request, booking response, history response, and transition command responses in `src/types`.
-- [ ] 1.2 Add `src/api/bookings.ts` with functions for create booking, get booking, get booking history, approve, reject, confirm, and cancel.
-- [ ] 1.3 Reuse the shared axios client so booking API calls automatically send bearer tokens and clear auth state on `401`.
-- [ ] 1.4 Add a small booking error classification helper or reuse `parseApiError` so `400`, `401`, `403`, `404`, and `409` can be rendered consistently.
+- [x] 1.1 Add booking domain types for statuses, create request, booking response, history response, and transition command responses in `src/types`.
+- [x] 1.2 Add `src/api/bookings.ts` with functions for create booking, get booking, get booking history, approve, reject, confirm, and cancel.
+- [x] 1.3 Reuse the shared axios client so booking API calls automatically send bearer tokens and clear auth state on `401`.
+- [x] 1.4 Add a small booking error classification helper or reuse `parseApiError` so `400`, `401`, `403`, `404`, and `409` can be rendered consistently.
 
 ## 2. Calendar Selection Payload
 
-- [ ] 2.1 Refactor `BookingCalendar` to expose selected booking payload data through a callback or confirm handler without owning backend API calls.
-- [ ] 2.2 Calculate `startAt` and exclusive `endAt` from selected date, start hour, and resolved duration using existing whole-hour local-time helpers.
-- [ ] 2.3 Add parent-controlled submitting/disabled state to the booking confirm control to prevent duplicate submission.
-- [ ] 2.4 Preserve preview mode, busy interval rendering, duration resolution, and existing unavailable-slot behavior.
+- [x] 2.1 Refactor `BookingCalendar` to expose selected booking payload data through a callback or confirm handler without owning backend API calls.
+- [x] 2.2 Calculate `startAt` and exclusive `endAt` from selected date, start hour, and resolved duration using existing whole-hour local-time helpers.
+- [x] 2.3 Add parent-controlled submitting/disabled state to the booking confirm control to prevent duplicate submission.
+- [x] 2.4 Preserve preview mode, busy interval rendering, duration resolution, and existing unavailable-slot behavior.
 
 ## 3. Booking Creation Flow
 
-- [ ] 3.1 Update `BookingPage` to submit selected booking payloads through the booking API for authenticated tenants.
-- [ ] 3.2 Show successful booking creation state with booking id, status, interval, total price, and a link to booking detail.
-- [ ] 3.3 Prevent known landlords from submitting tenant booking requests and show an account-role message.
-- [ ] 3.4 Handle `400`, `403`, and `404` booking creation responses without clearing listing context.
-- [ ] 3.5 Handle `409 Conflict` by showing a recoverable conflict message and refreshing listing availability for the visible calendar period.
+- [x] 3.1 Update `BookingPage` to submit selected booking payloads through the booking API for authenticated tenants.
+- [x] 3.2 Show successful booking creation state with booking id, status, interval, and total price directly on `BookingPage`.
+- [x] 3.3 Prevent known landlords from submitting tenant booking requests and show an account-role message.
+- [x] 3.4 Handle `400`, `403`, and `404` booking creation responses without clearing listing context.
+- [x] 3.5 Handle `409 Conflict` by showing a recoverable conflict message and refreshing listing availability for the visible calendar period.
 
 ## 4. Guest Booking Intent and Auth Return
 
-- [ ] 4.1 When a guest confirms a booking selection, route them to login or registration with return context for the booking page.
-- [ ] 4.2 Update login success handling to return to the original booking route when valid return context exists.
-- [ ] 4.3 Update registration success handling to preserve the intended booking return path through the login step where possible.
-- [ ] 4.4 Add fallback handling for missing or stale return context so the app returns to the booking page or catalog without throwing.
+- [x] 4.1 When a guest confirms a booking selection, route them to login or registration with return context for the booking page.
+- [x] 4.2 Update login success handling to return to the original booking route when valid return context exists.
+- [x] 4.3 Update registration success handling to preserve the intended booking return path through the login step where possible.
+- [x] 4.4 Add fallback handling for missing or stale return context so the app returns to the booking page or catalog without throwing.
 
 ## 5. Booking Detail and History UI
 
-- [ ] 5.1 Add a booking detail route that requires authentication.
-- [ ] 5.2 Add a booking detail page that loads `GET /api/bookings/{bookingId}` and renders loading, loaded, unavailable, forbidden, and error states.
-- [ ] 5.3 Render booking status, listing id, interval, price per hour, total price, and confirmation deadline when present.
-- [ ] 5.4 Load and render booking history from `GET /api/bookings/{bookingId}/history` in backend order.
-- [ ] 5.5 Link successful booking creation to the new booking detail route.
+- [x] 5.1 Add a booking detail route that requires authentication.
+- [x] 5.2 Add a booking detail page that loads `GET /api/bookings/{bookingId}` and renders loading, loaded, unavailable, forbidden, and error states.
+- [x] 5.3 Render booking status, listing id, interval, price per hour, total price, and confirmation deadline when present.
+- [x] 5.4 Load and render booking history from `GET /api/bookings/{bookingId}/history` in backend order.
+- [x] 5.5 Link successful booking creation to the new booking detail route.
 
 ## 6. Participant Transition Controls
 
