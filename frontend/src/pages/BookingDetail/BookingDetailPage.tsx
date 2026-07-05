@@ -2,10 +2,15 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import {
+  approveBooking,
+  cancelBooking,
   getBooking,
   getBookingHistory,
+  confirmBooking,
   parseBookingApiError,
+  rejectBooking,
 } from '../../api/bookings'
+import { useAuth } from '../../auth/useAuth'
 import type {
   BookingHistoryResponse,
   BookingResponse,
@@ -18,6 +23,8 @@ type BookingDetailState =
   | 'notFound'
   | 'unavailable'
   | 'error'
+
+type BookingAction = 'approve' | 'reject' | 'confirm' | 'cancel'
 
 const DATE_TIME_FORMAT = new Intl.DateTimeFormat('ru-RU', {
   dateStyle: 'medium',
@@ -51,11 +58,37 @@ function formatStatus(status: BookingHistoryResponse['toStatus'] | null) {
   return BOOKING_STATUS_LABELS[status]
 }
 
+function getBookingActionLabel(action: BookingAction) {
+  if (action === 'approve') return 'Одобрить'
+  if (action === 'reject') return 'Отклонить'
+  if (action === 'confirm') return 'Подтвердить'
+  return 'Отменить'
+}
+
+function isTerminalStatus(status: BookingResponse['status']) {
+  return (
+    status === 'COMPLETED' ||
+    status === 'REJECTED' ||
+    status === 'CANCELLED' ||
+    status === 'EXPIRED'
+  )
+}
+
 export function BookingDetailPage() {
   const { bookingId } = useParams()
+  const { profile, loading: authLoading } = useAuth()
   const [booking, setBooking] = useState<BookingResponse | null>(null)
   const [history, setHistory] = useState<BookingHistoryResponse[]>([])
   const [state, setState] = useState<BookingDetailState>('loading')
+  const [actionState, setActionState] = useState<{
+    action: BookingAction | null
+    message: string
+    kind: 'info' | 'error'
+  }>({
+    action: null,
+    message: '',
+    kind: 'info',
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -64,6 +97,7 @@ export function BookingDetailPage() {
       setState('loading')
       setBooking(null)
       setHistory([])
+      setActionState({ action: null, message: '', kind: 'info' })
 
       try {
         const [loadedBooking, loadedHistory] = await Promise.all([
@@ -105,6 +139,91 @@ export function BookingDetailPage() {
       cancelled = true
     }
   }, [bookingId])
+
+  async function refreshBooking() {
+    const targetBookingId = bookingId ?? ''
+    const [loadedBooking, loadedHistory] = await Promise.all([
+      getBooking(targetBookingId),
+      getBookingHistory(targetBookingId),
+    ])
+
+    setBooking(loadedBooking)
+    setHistory(loadedHistory)
+    setState('loaded')
+    return loadedBooking
+  }
+
+  async function handleAction(action: BookingAction) {
+    if (!bookingId || !booking) {
+      return
+    }
+
+    setActionState({
+      action,
+      message: '',
+      kind: 'info',
+    })
+
+    try {
+      if (action === 'approve') {
+        setBooking(await approveBooking(bookingId))
+      } else if (action === 'reject') {
+        setBooking(await rejectBooking(bookingId))
+      } else if (action === 'confirm') {
+        setBooking(await confirmBooking(bookingId))
+      } else {
+        setBooking(await cancelBooking(bookingId))
+      }
+
+      const updatedBooking = await refreshBooking()
+      setActionState({
+        action: null,
+        message: `Действие "${getBookingActionLabel(action)}" выполнено.`,
+        kind: 'info',
+      })
+      setBooking(updatedBooking)
+    } catch (error) {
+      const parsedError = parseBookingApiError(error)
+      const message =
+        parsedError.kind === 'forbidden'
+          ? 'Текущий аккаунт не может выполнить это действие.'
+          : parsedError.kind === 'conflict'
+            ? 'Бронь уже изменилась. Мы обновили данные и историю.'
+            : parsedError.message
+
+      setActionState({
+        action: null,
+        message,
+        kind: 'error',
+      })
+
+      if (parsedError.kind === 'conflict') {
+        try {
+          await refreshBooking()
+        } catch (refreshError) {
+          console.error(refreshError)
+        }
+      }
+    }
+  }
+
+  const canShowLandlordActions =
+    !authLoading &&
+    profile?.role === 'LANDLORD' &&
+    booking &&
+    booking.status === 'REQUESTED'
+
+  const canShowTenantActions =
+    !authLoading &&
+    profile?.role === 'TENANT' &&
+    booking &&
+    booking.status === 'AWAITING_CONFIRMATION'
+
+  const showActions = Boolean(
+    booking &&
+      !isTerminalStatus(booking.status) &&
+      (canShowLandlordActions || canShowTenantActions),
+  )
 
   if (state === 'loading') {
     return (
@@ -218,6 +337,65 @@ export function BookingDetailPage() {
             </li>
           ))}
         </ul>
+
+        {showActions && booking && (
+          <section className={styles.actionsSection}>
+            <h2 className={styles.sectionTitle}>Действия</h2>
+            <div className={styles.actionsGrid}>
+              {canShowLandlordActions && (
+                <>
+                  <button
+                    type="button"
+                    className={styles.actionButton}
+                    onClick={() => handleAction('approve')}
+                    disabled={actionState.action !== null}
+                  >
+                    Одобрить
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.actionButtonSecondary}
+                    onClick={() => handleAction('reject')}
+                    disabled={actionState.action !== null}
+                  >
+                    Отклонить
+                  </button>
+                </>
+              )}
+
+              {canShowTenantActions && (
+                <>
+                  <button
+                    type="button"
+                    className={styles.actionButton}
+                    onClick={() => handleAction('confirm')}
+                    disabled={actionState.action !== null}
+                  >
+                    Подтвердить
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.actionButtonSecondary}
+                    onClick={() => handleAction('cancel')}
+                    disabled={actionState.action !== null}
+                  >
+                    Отменить
+                  </button>
+                </>
+              )}
+            </div>
+            {actionState.message && (
+              <p
+                className={
+                  actionState.kind === 'error' ? styles.actionError : styles.actionInfo
+                }
+                role={actionState.kind === 'error' ? 'alert' : 'status'}
+              >
+                {actionState.message}
+              </p>
+            )}
+          </section>
+        )}
       </section>
     </main>
   )

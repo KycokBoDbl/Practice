@@ -37,15 +37,15 @@
 
 ## 6. Participant Transition Controls
 
-- [ ] 6.1 Show approve and reject controls for known landlord users viewing a `REQUESTED` booking.
-- [ ] 6.2 Show confirm and cancel controls for known tenant users viewing an `AWAITING_CONFIRMATION` booking.
-- [ ] 6.3 Hide mutating controls for terminal statuses and unsupported role/status combinations.
-- [ ] 6.4 Submit transition actions through the booking API and update the visible booking state from backend responses.
-- [ ] 6.5 Refresh booking history after successful transitions and show conflict/forbidden errors when transitions are rejected.
+- [x] 6.1 Show approve and reject controls for known landlord users viewing a `REQUESTED` booking.
+- [x] 6.2 Show confirm and cancel controls for known tenant users viewing an `AWAITING_CONFIRMATION` booking.
+- [x] 6.3 Hide mutating controls for terminal statuses and unsupported role/status combinations.
+- [x] 6.4 Submit transition actions through the booking API and update the visible booking state from backend responses.
+- [x] 6.5 Refresh booking history after successful transitions and show conflict/forbidden errors when transitions are rejected.
 
 ## 7. Verification
 
-- [ ] 7.1 Run `npm run lint` and resolve frontend lint issues introduced by the change.
-- [ ] 7.2 Run `npm run build` and resolve TypeScript or Vite build issues.
-- [ ] 7.3 Manually verify guest booking redirect, tenant booking creation, landlord role prevention, conflict handling, booking detail loading, history rendering, and transition error states.
-- [ ] 7.4 Verify existing public catalog, listing detail, auth registration/login/profile, and booking calendar preview behavior still works.
+- [x] 7.1 Run `npm run lint` and resolve frontend lint issues introduced by the change.
+- [x] 7.2 Run `npm run build` and resolve TypeScript or Vite build issues.
+- [x] 7.3 Manually verify guest booking redirect, tenant booking creation, landlord role prevention, conflict handling, booking detail loading, history rendering, and transition error states.
+- [x] 7.4 Verify existing public catalog, listing detail, auth registration/login/profile, and booking calendar preview behavior still works.
