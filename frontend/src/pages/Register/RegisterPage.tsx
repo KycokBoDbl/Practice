@@ -1,8 +1,9 @@
 import type { FormEvent } from 'react'
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 import { parseApiError } from '../../api/problemDetails'
+import { getAuthRedirectState } from '../../auth/authRedirectState'
 import { useAuth } from '../../auth/useAuth'
 import type { UserRole } from '../../types/auth'
 import styles from './RegisterPage.module.css'
@@ -52,6 +53,8 @@ function validatePassword(password: string) {
 
 export function RegisterPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const locationState = getAuthRedirectState(location.state)
   const { register } = useAuth()
   const [role, setRole] = useState<UserRole>('TENANT')
   const [legalName, setLegalName] = useState('')
@@ -86,6 +89,7 @@ export function RegisterPage() {
         state: {
           registrationSuccess: true,
           registeredEmail: email,
+          returnTo: locationState.returnTo,
         },
       })
     } catch (error) {
@@ -220,7 +224,7 @@ export function RegisterPage() {
         </form>
 
         <p className={styles.secondaryAction}>
-          Уже есть аккаунт? <Link to="/login">Войти</Link>
+          Уже есть аккаунт? <Link to="/login" state={locationState}>Войти</Link>
         </p>
       </section>
     </main>

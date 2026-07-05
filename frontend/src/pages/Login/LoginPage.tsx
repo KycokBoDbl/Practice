@@ -1,8 +1,9 @@
 import type { FormEvent } from 'react'
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 import { parseApiError } from '../../api/problemDetails'
+import { getAuthRedirectState } from '../../auth/authRedirectState'
 import { useAuth } from '../../auth/useAuth'
 import styles from './LoginPage.module.css'
 
@@ -14,14 +15,10 @@ interface LoginFormErrors {
 
 const INVALID_CREDENTIALS_MESSAGE = 'Неверный email или пароль.'
 
-interface LoginLocationState {
-  registrationSuccess?: boolean
-  registeredEmail?: string
-}
-
 export function LoginPage() {
   const location = useLocation()
-  const locationState = location.state as LoginLocationState | null
+  const navigate = useNavigate()
+  const locationState = getAuthRedirectState(location.state)
   const { login } = useAuth()
   const [email, setEmail] = useState(locationState?.registeredEmail ?? '')
   const [password, setPassword] = useState('')
@@ -42,6 +39,12 @@ export function LoginPage() {
 
     try {
       await login({ email, password })
+
+      if (locationState.returnTo) {
+        navigate(locationState.returnTo, { replace: true })
+        return
+      }
+
       setSuccessMessage('Вход выполнен.')
     } catch (error) {
       const parsedError = parseApiError(error)
@@ -120,7 +123,7 @@ export function LoginPage() {
         </form>
 
         <p className={styles.secondaryAction}>
-          Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
+          Нет аккаунта? <Link to="/register" state={locationState}>Зарегистрироваться</Link>
         </p>
       </section>
     </main>

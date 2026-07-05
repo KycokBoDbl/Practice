@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 
+import { getAuthRedirectState } from './authRedirectState'
 import { useAuth } from './useAuth'
 
 interface RedirectAuthenticatedProps {
@@ -9,13 +10,15 @@ interface RedirectAuthenticatedProps {
 
 export function RedirectAuthenticated({ children }: RedirectAuthenticatedProps) {
   const { isAuthenticated, loading } = useAuth()
+  const location = useLocation()
+  const locationState = getAuthRedirectState(location.state)
 
   if (loading) {
     return <main>Проверяем авторизацию...</main>
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/profile" replace />
+    return <Navigate to={locationState.returnTo ?? '/profile'} replace />
   }
 
   return children

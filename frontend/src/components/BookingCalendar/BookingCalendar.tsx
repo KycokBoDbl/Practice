@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 
 import { durations, timeSlots } from './constants'
 import styles from './BookingCalendar.module.css'
+import type { CreateBookingRequest } from '../../types/booking'
 import {
   BookingSummary,
   DurationSection,
@@ -10,6 +11,7 @@ import {
 } from './BookingCalendarSections'
 import { useListingAvailability } from './useListingAvailability'
 import {
+  getDateTimeValue,
   getDaysOfMonth,
   getHourFromSlot,
   getNextBusyHour,
@@ -17,16 +19,26 @@ import {
   toDateValue,
 } from './utils'
 
+export interface BookingCalendarPayload extends CreateBookingRequest {
+  duration: number
+}
+
 interface BookingCalendarProps {
   listingId: number
   pricePerHour: number
   mode?: 'preview' | 'booking'
+  bookingSubmitting?: boolean
+  availabilityRefreshKey?: number
+  onConfirmBooking?: (payload: BookingCalendarPayload) => void
 }
 
 export function BookingCalendar({
   listingId,
   pricePerHour,
   mode = 'booking',
+  bookingSubmitting = false,
+  availabilityRefreshKey = 0,
+  onConfirmBooking,
 }: BookingCalendarProps) {
   const today = new Date()
 
@@ -44,6 +56,7 @@ export function BookingCalendar({
   const { availabilityLoading, busyIntervals } = useListingAvailability(
     listingId,
     visibleMonth,
+    availabilityRefreshKey,
   )
 
   const calendarDays = useMemo(
@@ -72,6 +85,27 @@ export function BookingCalendar({
         ? availableDurations[availableDurations.length - 1]
         : duration
   const totalPrice = pricePerHour * resolvedDuration
+  const bookingPayload = useMemo<BookingCalendarPayload | null>(() => {
+    if (resolvedDuration === 0 || selectedSlotStatus === 'booked') {
+      return null
+    }
+
+    return {
+      listingId,
+      startAt: getDateTimeValue(selectedDate, selectedStartHour),
+      endAt: getDateTimeValue(
+        selectedDate,
+        selectedStartHour + resolvedDuration,
+      ),
+      duration: resolvedDuration,
+    }
+  }, [
+    listingId,
+    resolvedDuration,
+    selectedDate,
+    selectedSlotStatus,
+    selectedStartHour,
+  ])
 
   function goToPreviousMonth() {
     const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1)
@@ -89,6 +123,14 @@ export function BookingCalendar({
     setVisibleMonth(
       new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1),
     )
+  }
+
+  function handleConfirmBooking() {
+    if (!bookingPayload || bookingSubmitting) {
+      return
+    }
+
+    onConfirmBooking?.(bookingPayload)
   }
 
   return (
@@ -160,9 +202,10 @@ export function BookingCalendar({
           <button
             className={styles.confirmButton}
             type="button"
-            disabled={availableDurations.length === 0}
+            disabled={!bookingPayload || bookingSubmitting}
+            onClick={handleConfirmBooking}
           >
-            Подтвердить бронирование
+            {bookingSubmitting ? 'Подтверждаем...' : 'Подтвердить бронирование'}
           </button>
         </>
       )}
