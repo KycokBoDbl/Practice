@@ -18,6 +18,7 @@ class AuthDtoValidationTest {
         RegisterRequestDto request = request("2225123456", "S3cure-roomhub-password");
 
         assertThat(validator.validate(request)).isEmpty();
+        assertThat(validator.validate(request("2225123456", "12345678"))).isEmpty();
     }
 
     @Test
@@ -30,7 +31,7 @@ class AuthDtoValidationTest {
 
     @Test
     void rejectsPasswordOutsideBcryptLimits() {
-        assertThat(validator.validate(request("2225123456", "too-short")))
+        assertThat(validator.validate(request("2225123456", "1234567")))
                 .anyMatch(violation -> violation.getPropertyPath().toString().equals("password"));
         assertThat(validator.validate(request("2225123456", "я".repeat(37))))
                 .anyMatch(violation -> violation.getPropertyPath().toString().equals("password"));

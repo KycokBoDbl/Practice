@@ -13,17 +13,21 @@ public class ListingEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, length = 255)
     private String title;
 
     private String description;
 
+    @Column(nullable = false, length = 100)
     private String city;
 
+    @Column(nullable = false, length = 255)
     private String address;
 
-    @Column(name = "price_per_hour")
+    @Column(name = "price_per_hour", nullable = false, precision = 10, scale = 2)
     private BigDecimal pricePerHour;
 
+    @Column(nullable = false)
     private Integer capacity;
 
     @Enumerated(EnumType.STRING)
@@ -37,12 +41,66 @@ public class ListingEntity {
     @Column(nullable = false, length = 50)
     private ListingStatus status;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_organization_id")
     private OrganizationEntity ownerOrganization;
+
+    protected ListingEntity() {
+    }
+
+    private ListingEntity(
+            String title,
+            String description,
+            String city,
+            String address,
+            BigDecimal pricePerHour,
+            Integer capacity,
+            SpaceType spaceType,
+            String imageUrl,
+            LocalDateTime createdAt,
+            OrganizationEntity ownerOrganization
+    ) {
+        this.title = title;
+        this.description = description;
+        this.city = city;
+        this.address = address;
+        this.pricePerHour = pricePerHour;
+        this.capacity = capacity;
+        this.spaceType = spaceType;
+        this.imageUrl = imageUrl;
+        this.status = ListingStatus.PUBLISHED;
+        this.createdAt = createdAt;
+        this.ownerOrganization = ownerOrganization;
+    }
+
+    public static ListingEntity published(
+            String title,
+            String description,
+            String city,
+            String address,
+            BigDecimal pricePerHour,
+            Integer capacity,
+            SpaceType spaceType,
+            String imageUrl,
+            LocalDateTime createdAt,
+            OrganizationEntity ownerOrganization
+    ) {
+        return new ListingEntity(
+                title,
+                description,
+                city,
+                address,
+                pricePerHour,
+                capacity,
+                spaceType,
+                imageUrl,
+                createdAt,
+                ownerOrganization
+        );
+    }
 
     public Long getId() {
         return id;

@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
 @Constraint(validatedBy = PasswordValidator.class)
 public @interface ValidPassword {
 
-    String message() default "password must contain 12 to 64 characters and at most 72 UTF-8 bytes";
+    String message() default "password must contain 8 to 64 characters and at most 72 UTF-8 bytes";
 
     Class<?>[] groups() default {};
 

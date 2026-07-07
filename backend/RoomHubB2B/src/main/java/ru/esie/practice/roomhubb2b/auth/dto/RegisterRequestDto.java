@@ -32,7 +32,7 @@ public record RegisterRequestDto(
 
         @NotBlank
         @ValidPassword
-        @Schema(accessMode = Schema.AccessMode.WRITE_ONLY, minLength = 12, maxLength = 64)
+        @Schema(accessMode = Schema.AccessMode.WRITE_ONLY, minLength = 8, maxLength = 64)
         String password
 ) {
 }

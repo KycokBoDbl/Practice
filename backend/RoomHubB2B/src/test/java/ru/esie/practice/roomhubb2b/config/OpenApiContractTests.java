@@ -53,6 +53,49 @@ class OpenApiContractTests {
     }
 
     @Test
+    void exposesProtectedListingPublicationContract() throws Exception {
+        String publish = "$['paths']['/api/listings']['post']";
+
+        mockMvc.perform(get("/api/openapi").accept("application/json"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(publish + ".operationId").value("publishListing"))
+                .andExpect(jsonPath(publish + ".security[0].bearerAuth").isArray())
+                .andExpect(jsonPath(publish + ".requestBody.required").value(true))
+                .andExpect(jsonPath(publish + ".requestBody.content['application/json'].schema['$ref']")
+                        .value("#/components/schemas/CreateListingRequestDto"))
+                .andExpect(jsonPath(publish + ".responses['201'].content['application/json'].schema['$ref']")
+                        .value("#/components/schemas/ListingResponseDto"))
+                .andExpect(jsonPath(publish + ".responses['201'].headers.Location.schema.type")
+                        .value("string"))
+                .andExpect(jsonPath(publish + ".responses['201'].headers.Location.schema.format")
+                        .value("uri"))
+                .andExpect(jsonPath(publish + ".responses['400']").exists())
+                .andExpect(jsonPath(publish + ".responses['401']").exists())
+                .andExpect(jsonPath(publish + ".responses['403']").exists())
+                .andExpect(jsonPath(publish + ".responses['400'].content['application/problem+json'].schema['$ref']")
+                        .value("#/components/schemas/ProblemDetail"))
+                .andExpect(jsonPath(publish + ".responses['401'].content['application/problem+json'].schema['$ref']")
+                        .value("#/components/schemas/ProblemDetail"))
+                .andExpect(jsonPath(publish + ".responses['403'].content['application/problem+json'].schema['$ref']")
+                        .value("#/components/schemas/ProblemDetail"))
+                .andExpect(jsonPath("$.components.schemas.CreateListingRequestDto.required")
+                        .value(org.hamcrest.Matchers.containsInAnyOrder(
+                                "title", "city", "address", "pricePerHour", "capacity", "spaceType"
+                        )))
+                .andExpect(jsonPath("$.components.schemas.CreateListingRequestDto.properties.ownerOrganizationId")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.components.schemas.CreateListingRequestDto.properties.status")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.components.schemas.CreateListingRequestDto.properties.createdAt")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.description.type")
+                        .value(org.hamcrest.Matchers.containsInAnyOrder("string", "null")))
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.imageUrl.type")
+                        .value(org.hamcrest.Matchers.containsInAnyOrder("string", "null")))
+                .andExpect(jsonPath("$['paths']['/api/listings']['get'].security").doesNotExist());
+    }
+
+    @Test
     void exposesHourlyListingAvailabilityInOpenApiContract() throws Exception {
         String operation = "$['paths']['/api/listings/{listingId}/availability']['get']";
 
@@ -123,6 +166,7 @@ class OpenApiContractTests {
                 .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.type").value("http"))
                 .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.scheme").value("bearer"))
                 .andExpect(jsonPath("$.components.schemas.RegisterRequestDto.properties.password.writeOnly").value(true))
+                .andExpect(jsonPath("$.components.schemas.RegisterRequestDto.properties.password.minLength").value(8))
                 .andExpect(jsonPath("$.components.schemas.ProfileResponseDto.properties.passwordHash").doesNotExist())
                 .andExpect(jsonPath("$['paths']['/api/listings']['get'].security").doesNotExist())
                 .andExpect(jsonPath("$['paths']['/api/listings/{listingId}/availability']['get'].security").doesNotExist());

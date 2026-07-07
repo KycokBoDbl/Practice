@@ -13,6 +13,8 @@ import ru.esie.practice.roomhubb2b.auth.RegistrationConflictException;
 import ru.esie.practice.roomhubb2b.booking.BookingConflictException;
 import ru.esie.practice.roomhubb2b.booking.BookingForbiddenException;
 import ru.esie.practice.roomhubb2b.booking.BookingNotFoundException;
+import ru.esie.practice.roomhubb2b.listing.ListingForbiddenException;
+import tools.jackson.databind.exc.InvalidFormatException;
 
 import java.net.URI;
 import java.util.List;
@@ -36,6 +38,17 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     ProblemDetail handleUnreadable(HttpMessageNotReadableException exception, HttpServletRequest request) {
+        InvalidFormatException invalidFormat = findCause(exception, InvalidFormatException.class);
+        if (invalidFormat != null && invalidFormat.getTargetType() != null
+                && invalidFormat.getTargetType().isEnum() && !invalidFormat.getPath().isEmpty()) {
+            String field = invalidFormat.getPath().get(invalidFormat.getPath().size() - 1).getPropertyName();
+            ProblemDetail problem = problem(HttpStatus.BAD_REQUEST, "Request validation failed", request);
+            problem.setProperty("errors", List.of(Map.of(
+                    "field", field == null ? "request" : field,
+                    "message", "unsupported enum value"
+            )));
+            return problem;
+        }
         return problem(HttpStatus.BAD_REQUEST, "Request body is malformed", request);
     }
 
@@ -59,6 +72,11 @@ public class ApiExceptionHandler {
         return problem(HttpStatus.FORBIDDEN, exception.getMessage(), request);
     }
 
+    @ExceptionHandler(ListingForbiddenException.class)
+    ProblemDetail handleListingForbidden(ListingForbiddenException exception, HttpServletRequest request) {
+        return problem(HttpStatus.FORBIDDEN, exception.getMessage(), request);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     ProblemDetail handleIllegalArgument(IllegalArgumentException exception, HttpServletRequest request) {
         return problem(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
@@ -74,5 +92,16 @@ public class ApiExceptionHandler {
         problem.setTitle(status.getReasonPhrase());
         problem.setInstance(URI.create(request.getRequestURI()));
         return problem;
+    }
+
+    private static <T extends Throwable> T findCause(Throwable exception, Class<T> type) {
+        Throwable current = exception;
+        while (current != null) {
+            if (type.isInstance(current)) {
+                return type.cast(current);
+            }
+            current = current.getCause();
+        }
+        return null;
     }
 }

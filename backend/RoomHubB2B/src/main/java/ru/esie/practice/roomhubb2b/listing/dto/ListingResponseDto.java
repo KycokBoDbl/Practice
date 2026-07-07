@@ -13,8 +13,9 @@ public record ListingResponseDto(
         @Schema(description = "Rental price per hour", example = "2500.00") BigDecimal pricePerHour,
         @Schema(description = "Maximum number of guests", example = "20") Integer capacity,
         @Schema(description = "Commercial space type", example = "MEETING_ROOM") SpaceType spaceType,
-        @Schema(description = "Public listing image URL", example = "https://example.com/listing-42.jpg") String imageUrl,
-        @Schema(description = "Detailed listing description") String description,
+        @Schema(description = "Public listing image URL", example = "https://example.com/listing-42.jpg", nullable = true)
+        String imageUrl,
+        @Schema(description = "Detailed listing description", nullable = true) String description,
         @Schema(description = "Street address", example = "Lenina Avenue, 10") String address
 ) {
 }
