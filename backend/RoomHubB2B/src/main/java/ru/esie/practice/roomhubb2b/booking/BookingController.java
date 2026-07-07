@@ -18,7 +18,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import ru.esie.practice.roomhubb2b.booking.dto.BookingInboxItemDto;
 import ru.esie.practice.roomhubb2b.booking.dto.BookingHistoryResponseDto;
 import ru.esie.practice.roomhubb2b.booking.dto.BookingResponseDto;
 import ru.esie.practice.roomhubb2b.booking.dto.CreateBookingRequestDto;
@@ -50,6 +52,22 @@ public class BookingController {
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(bookingService.create(BookingActor.from(jwt), request));
+    }
+
+    @GetMapping
+    @Operation(operationId = "getBookingInbox", summary = "Get participant booking inbox")
+    @BookingApiResponses
+    public List<BookingInboxItemDto> inbox(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) BookingStatus status
+    ) {
+        List<BookingInboxItemDto> inbox = bookingService.getInbox(BookingActor.from(jwt));
+        if (status == null) {
+            return inbox;
+        }
+        return inbox.stream()
+                .filter(item -> item.status() == status)
+                .toList();
     }
 
     @GetMapping("/{bookingId}")

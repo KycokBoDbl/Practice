@@ -3,9 +3,7 @@
 ## Purpose
 
 Defines the runtime OpenAPI contract, public operation coverage, reproducible contract export, and the documented workflow for coordinating backend and frontend API changes.
-
 ## Requirements
-
 ### Requirement: Runtime OpenAPI document
 Backend SHALL expose a valid OpenAPI 3 JSON document through `GET /api/openapi` while the application is running.
 
@@ -54,4 +52,20 @@ The root `README.md` SHALL document prerequisites, backend startup, the runtime 
 #### Scenario: Implementation does not change the contract
 - **WHEN** backend internals change without changing public API behavior
 - **THEN** the documented workflow uses an unchanged generated file as evidence that no frontend contract update is required
+
+### Requirement: Booking inbox contract is published
+The OpenAPI document SHALL include the booking inbox endpoint, its supported query parameters, successful response schema, and documented error responses.
+
+#### Scenario: Inbox endpoint is present in OpenAPI
+- **WHEN** a client reads `GET /api/openapi`
+- **THEN** the OpenAPI document contains the booking inbox path
+- **THEN** the operation documents bearer authentication, `200`, `400`, and `401` responses
+
+#### Scenario: Inbox response schema is documented
+- **WHEN** a frontend developer inspects the successful inbox response schema
+- **THEN** each item schema documents id, listingId, listingTitle, status, startAt, endAt, pricePerHour, totalPrice, confirmationDeadline, tenantOrganizationName, landlordOrganizationName, createdAt, and updatedAt using camelCase names
+
+#### Scenario: Exported contract contains inbox changes
+- **WHEN** the OpenAPI export command is run after implementing the booking inbox endpoint
+- **THEN** `openapi/roomhub-b2b.openapi.json` contains the same booking inbox path and schemas as the runtime OpenAPI document
 
