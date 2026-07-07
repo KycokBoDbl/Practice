@@ -14,6 +14,12 @@ export type BookingTransitionCommand =
   | 'confirm'
   | 'cancel'
 
+export type BookingInboxFilterStatus = BookingStatus
+
+export interface BookingInboxFilters {
+  status?: BookingInboxFilterStatus
+}
+
 export interface CreateBookingRequest {
   listingId: number
   startAt: string
@@ -37,6 +43,22 @@ export interface BookingHistoryResponse {
   toStatus: BookingStatus
   reason: string
   createdAt: string
+}
+
+export interface BookingInboxItem {
+  id: number
+  listingId: number
+  listingTitle: string
+  status: BookingStatus
+  startAt: string
+  endAt: string
+  pricePerHour: number
+  totalPrice: number
+  confirmationDeadline: string | null
+  tenantOrganizationName: string
+  landlordOrganizationName: string
+  createdAt: string
+  updatedAt: string
 }
 
 export type BookingTransitionResponse = BookingResponse

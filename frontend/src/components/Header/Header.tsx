@@ -27,6 +27,10 @@ export function Header() {
 
         {isAuthenticated ? (
           <>
+            <NavLink to="/bookings" className={({ isActive }) => getLinkClass(isActive)}>
+              Заявки
+            </NavLink>
+
             <NavLink to="/profile" className={({ isActive }) => getLinkClass(isActive)}>
               Профиль
             </NavLink>
