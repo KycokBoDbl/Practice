@@ -28,3 +28,19 @@ The frontend SHALL strengthen frontend TypeScript types without requiring an imm
 #### Scenario: API listing data is consumed
 - **WHEN** listing data is received from the existing API
 - **THEN** the frontend SHALL continue to consume the response while applying stronger typing at the frontend boundary
+
+### Requirement: Listing publication request is typed
+The frontend SHALL represent listing publication request data with explicit TypeScript types compatible with the backend listing publication contract.
+
+#### Scenario: Publication request is built
+- **WHEN** frontend code constructs a listing publication request
+- **THEN** TypeScript SHALL require `title`, `city`, `address`, `pricePerHour`, `capacity`, and `spaceType`
+- **AND** TypeScript SHALL allow `description` and `imageUrl` to be nullable optional values
+
+### Requirement: Nullable listing fields are modeled safely
+The frontend SHALL model nullable listing response fields according to the backend contract.
+
+#### Scenario: Listing media and description are consumed
+- **WHEN** frontend code consumes a listing response
+- **THEN** TypeScript SHALL allow `description` and `imageUrl` to be `null`
+- **AND** UI code SHALL handle those values without non-null assumptions

@@ -188,7 +188,9 @@ export function BookingPage() {
           <section className={styles.bookingResult} role="status">
             <h2>Заявка создана</h2>
             <p>
-              <Link to={`/bookings/${booking.id}`}>Открыть детали брони</Link>
+              <Link to={`/bookings/${booking.id}`} state={{ from: `/booking/${listing.id}` }}>
+                Открыть детали брони
+              </Link>
             </p>
             <dl className={styles.bookingDetails}>
               <div>

@@ -38,6 +38,28 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
             @Param("landlordOrganizationId") Long landlordOrganizationId
     );
 
+    @EntityGraph(attributePaths = {"listing", "listing.ownerOrganization", "tenantOrganization"})
+    @Query("""
+            SELECT booking
+            FROM BookingEntity booking
+            WHERE booking.tenantOrganization.id = :tenantOrganizationId
+            ORDER BY booking.createdAt DESC, booking.id DESC
+            """)
+    List<BookingEntity> findInboxByTenantOrganizationId(
+            @Param("tenantOrganizationId") Long tenantOrganizationId
+    );
+
+    @EntityGraph(attributePaths = {"listing", "listing.ownerOrganization", "tenantOrganization"})
+    @Query("""
+            SELECT booking
+            FROM BookingEntity booking
+            WHERE booking.listing.ownerOrganization.id = :landlordOrganizationId
+            ORDER BY booking.createdAt DESC, booking.id DESC
+            """)
+    List<BookingEntity> findInboxByLandlordOrganizationId(
+            @Param("landlordOrganizationId") Long landlordOrganizationId
+    );
+
     @Query("""
             SELECT booking.id
             FROM BookingEntity booking

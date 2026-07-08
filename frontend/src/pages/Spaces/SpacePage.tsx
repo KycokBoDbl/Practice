@@ -41,6 +41,9 @@ export function SpacePage() {
     )
   }
 
+  const imageUrl = listing.imageUrl?.trim()
+  const description = listing.description?.trim()
+
   return (
     <main className={styles.page}>
       <Link to="/spaces" className={styles.backLink}>
@@ -50,11 +53,17 @@ export function SpacePage() {
       <div className={styles.layout}>
         <section>
           <div className={styles.gallery}>
-            <img
-              className={styles.mainImage}
-              src={listing.imageUrl}
-              alt={listing.title}
-            />
+            {imageUrl ? (
+              <img
+                className={styles.mainImage}
+                src={imageUrl}
+                alt={listing.title}
+              />
+            ) : (
+              <div className={styles.mainImagePlaceholder} aria-hidden="true">
+                <span>Изображение не добавлено</span>
+              </div>
+            )}
           </div>
 
           <div className={styles.info}>
@@ -87,7 +96,11 @@ export function SpacePage() {
             </div>
 
             <h2>Описание</h2>
-            <p className={styles.description}>{listing.description}</p>
+            <p
+              className={`${styles.description} ${description ? '' : styles.descriptionMuted}`}
+            >
+              {description || 'Описание пока не добавлено.'}
+            </p>
           </div>
         </section>
 

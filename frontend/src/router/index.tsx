@@ -8,8 +8,10 @@ import { RegisterPage } from '../pages/Register/RegisterPage'
 import { SpacesPage } from '../pages/Spaces/SpacesPage'
 import { BookingPage } from '../pages/Booking/BookingPage'
 import { BookingDetailPage } from '../pages/BookingDetail/BookingDetailPage'
+import { BookingInboxPage } from '../pages/BookingInbox/BookingInboxPage'
 import { ProfilePage } from '../pages/Profile/ProfilePage'
 import { SpacePage } from '../pages/Spaces/SpacePage'
+import { ListingPublicationPage } from '../pages/ListingPublication/ListingPublicationPage'
 
 export const router = createBrowserRouter([
   {
@@ -44,6 +46,14 @@ export const router = createBrowserRouter([
             element: <Navigate to="/" replace />,
           },
           {
+            path: 'new',
+            element: (
+              <RequireAuth>
+                <ListingPublicationPage />
+              </RequireAuth>
+            ),
+          },
+          {
             path: ':id',
             element: <SpacePage />,
           },
@@ -52,6 +62,14 @@ export const router = createBrowserRouter([
       {
         path: 'booking/:id',
         element: <BookingPage />,
+      },
+      {
+        path: 'bookings',
+        element: (
+          <RequireAuth>
+            <BookingInboxPage />
+          </RequireAuth>
+        ),
       },
       {
         path: 'bookings/:bookingId',

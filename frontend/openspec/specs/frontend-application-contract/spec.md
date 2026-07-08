@@ -35,6 +35,33 @@ The frontend SHALL centralize auth state and route protection for screens that r
 - **WHEN** an access token is present and not locally expired
 - **THEN** the frontend SHALL attach `Authorization: Bearer <accessToken>` through the shared API client
 
+### Requirement: Frontend exposes landlord publication navigation
+The frontend SHALL expose listing publication navigation to authenticated landlords without showing it to guests or tenants.
+
+#### Scenario: Landlord sees publication entry
+- **WHEN** an authenticated user with role `LANDLORD` sees the main header
+- **THEN** the frontend SHALL show a navigation entry to the listing publication route
+
+#### Scenario: Tenant or guest sees header
+- **WHEN** the current user is a tenant or unauthenticated guest
+- **THEN** the frontend SHALL NOT show landlord publication navigation
+
+### Requirement: Frontend protects listing publication route
+The frontend SHALL protect the listing publication route with the existing authentication flow and role-aware access handling.
+
+#### Scenario: Guest opens publication route
+- **WHEN** a guest navigates to the listing publication route directly
+- **THEN** the frontend SHALL route the user through the existing login flow before showing protected publication actions
+
+#### Scenario: Tenant opens publication route
+- **WHEN** an authenticated tenant navigates to the listing publication route
+- **THEN** the frontend SHALL show a safe unavailable or forbidden state
+- **AND** the frontend SHALL NOT allow listing submission
+
+#### Scenario: Landlord opens publication route
+- **WHEN** an authenticated landlord navigates to the listing publication route
+- **THEN** the frontend SHALL render the publication workflow inside the main application layout
+
 ### Requirement: Frontend booking submission follows backend workflow
 The frontend SHALL submit booking requests through the backend booking API when the user confirms a selected available slot.
 
@@ -94,4 +121,3 @@ The frontend SHALL map backend booking errors into user-visible states using sha
 #### Scenario: Booking request conflicts
 - **WHEN** the backend returns `409` for a booking endpoint
 - **THEN** the frontend SHALL show that the booking state or calendar slot changed and prompt the user to choose an updated action
-

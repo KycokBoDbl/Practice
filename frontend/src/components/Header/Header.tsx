@@ -8,7 +8,7 @@ function getLinkClass(isActive: boolean) {
 }
 
 export function Header() {
-  const { isAuthenticated, logout } = useAuth()
+  const { isAuthenticated, logout, profile } = useAuth()
 
   function handleLogout() {
     if (window.confirm('Выйти из аккаунта?')) {
@@ -27,6 +27,16 @@ export function Header() {
 
         {isAuthenticated ? (
           <>
+            {profile?.role === 'LANDLORD' && (
+              <NavLink to="/spaces/new" className={({ isActive }) => getLinkClass(isActive)}>
+                Опубликовать
+              </NavLink>
+            )}
+
+            <NavLink to="/bookings" className={({ isActive }) => getLinkClass(isActive)}>
+              Заявки
+            </NavLink>
+
             <NavLink to="/profile" className={({ isActive }) => getLinkClass(isActive)}>
               Профиль
             </NavLink>

@@ -30,6 +30,23 @@ The backend SHALL expose published commercial spaces and listing-local hourly av
 - **WHEN** `GET /api/listings/{listingId}/availability` receives hourly `from` and `to` query parameters
 - **THEN** the backend SHALL return sorted busy intervals for the published listing in listing-local time without UTC offsets
 
+### Requirement: Backend supports landlord listing publication
+The backend SHALL allow authenticated landlords to publish listings through the existing listings API without requiring a separate owner identifier in the request.
+
+#### Scenario: Landlord publishes listing
+- **WHEN** an authenticated `LANDLORD` sends valid listing data to `POST /api/listings`
+- **THEN** the backend SHALL create a published listing owned by the landlord organization from the bearer token
+- **AND** the response SHALL return the created listing using the standard listing response shape
+
+#### Scenario: Tenant attempts to publish listing
+- **WHEN** an authenticated `TENANT` sends a request to `POST /api/listings`
+- **THEN** the backend SHALL reject the request with a forbidden response
+
+#### Scenario: Listing response contains optional media fields
+- **WHEN** a published listing has no description or image URL
+- **THEN** the backend SHALL still return the listing successfully
+- **AND** `description` and `imageUrl` SHALL be nullable in the listing response contract
+
 ### Requirement: Backend enforces authenticated booking workflow
 The backend SHALL require bearer authentication and role-based authorization for booking workflow operations.
 
