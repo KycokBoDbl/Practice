@@ -1,0 +1,30 @@
+## 1. Модель запроса и создание объявления
+
+- [x] 1.1 Добавить `CreateListingRequestDto` с Jakarta Validation и OpenAPI schema для обязательных полей, числовых границ, enum и необязательного HTTP(S) `imageUrl`; подтвердить правила unit-тестом DTO. Предполагаемые файлы: `src/main/java/ru/esie/practice/roomhubb2b/listing/dto/CreateListingRequestDto.java`, `src/test/java/ru/esie/practice/roomhubb2b/listing/ListingDtoValidationTest.java`. DoD: валидный payload проходит validation, а каждый описанный невалидный класс данных дает ожидаемую field violation.
+- [x] 1.2 Добавить listing actor и доменные ошибки для безопасного чтения `organizationId`/`role` из JWT и отказа не-`LANDLORD`; подключить ошибки к `ProblemDetail`. Предполагаемые файлы: `src/main/java/ru/esie/practice/roomhubb2b/listing/ListingActor.java`, `src/main/java/ru/esie/practice/roomhubb2b/listing/ListingForbiddenException.java`, `src/main/java/ru/esie/practice/roomhubb2b/config/ApiExceptionHandler.java`, соответствующие unit tests. DoD: валидные claims создают actor, некорректные claims и запрещенная роль отображаются в контролируемый `403`.
+- [x] 1.3 Расширить `ListingEntity` factory/constructor и `ListingService` транзакционной публикацией, которая загружает организацию, устанавливает `PUBLISHED`, серверное `createdAt` и владельца, сохраняет запись и возвращает `ListingResponseDto`. Предполагаемые файлы: `src/main/java/ru/esie/practice/roomhubb2b/listing/ListingEntity.java`, `ListingService.java`, `src/test/java/ru/esie/practice/roomhubb2b/listing/ListingServiceTest.java`. DoD: service test подтверждает все server-controlled поля, отсутствие client-controlled owner/status/time и отказ роли `TENANT` без сохранения.
+
+## 2. REST API и контроль доступа
+
+- [x] 2.1 Добавить `POST /api/listings` в `ListingController` с `@Valid`, JWT principal, `201 Created` и существующим `ListingResponseDto`; не менять публичный `GET`. Предполагаемый файл: `src/main/java/ru/esie/practice/roomhubb2b/listing/ListingController.java`. DoD: controller делегирует публикацию с actor из токена и возвращает точный HTTP status/body.
+- [x] 2.2 Добавить API integration tests для успешной публикации и сохраненного владельца, немедленной видимости в публичном каталоге, необязательных полей, `400` validation/malformed body, `401` без токена и `403` для `TENANT`. Предполагаемый файл: `src/test/java/ru/esie/practice/roomhubb2b/listing/ListingPublicationApiIntegrationTest.java`. DoD: тесты проверяют response payload, состояние `listings` и отсутствие вставки во всех ошибочных сценариях.
+- [x] 2.3 Проверить database-инварианты нового write path без миграции: `owner_organization_id`, `status` и `created_at` заполнены, а существующие seed listings и `GET /api/listings` не регрессировали. Предполагаемые файлы: listing integration/schema tests; production migration files не изменяются. DoD: repository/database tests проходят на PostgreSQL и подтверждают совместимость текущей схемы.
+
+## 3. OpenAPI-контракт
+
+- [x] 3.1 Добавить controller/DTO OpenAPI metadata для bearer security, request schema, `201`, `400`, `401` и `403`; расширить runtime contract tests. Предполагаемые файлы: `src/main/java/ru/esie/practice/roomhubb2b/listing/ListingController.java`, `src/main/java/ru/esie/practice/roomhubb2b/listing/dto/CreateListingRequestDto.java`, `src/test/java/ru/esie/practice/roomhubb2b/config/OpenApiContractTests.java`. DoD: тест `/api/openapi` подтверждает `paths./api/listings.post`, schemas, security requirement и status codes, сохраняя неизменным GET response contract.
+- [x] 3.2 Запустить существующий Maven `openapi-export` pipeline и обновить generated artifact. Предполагаемый файл: `openapi/roomhub-b2b.openapi.json`. DoD: экспорт завершается успешно, JSON содержит тот же контракт публикации, что runtime, и diff не включает ручные или несвязанные изменения.
+
+## 4. Итоговая проверка
+
+- [x] 4.1 Запустить полный `./mvnw test` и отдельно убедиться, что auth, booking, availability и OpenAPI contract suites не регрессировали. Предполагаемые production-файлы: без изменений; исправляются только тесты или код в scope этого change. DoD: Maven test завершается с нулевым кодом и все suites проходят.
+- [x] 4.2 Выполнить smoke-проверку на PostgreSQL: зарегистрировать `LANDLORD`, получить token, опубликовать объявление и прочитать его анонимным `GET /api/listings`; затем проверить `TENANT` rejection. Предполагаемые файлы: без изменений. DoD: наблюдаемые HTTP statuses равны `201`, `200`, `403`, владелец в БД совпадает с организацией landlord.
+
+## 5. Исправления по code review
+
+- [x] 5.1 Синхронизировать nullable response schema и разделить Bean Validation от неизвестного enum с field-level `ProblemDetail.errors`. Файлы: listing DTO, `ApiExceptionHandler`, integration/OpenAPI tests. DoD: runtime JSON и OpenAPI совпадают, оба вида `400` проверены отдельно.
+- [x] 5.2 Добавить append-only Flyway migration и JPA metadata для обязательных текстов, `NUMERIC(10,2)`, положительных цены и вместимости. Файлы: `V10__add_listing_publication_constraints.sql`, `ListingEntity.java`, schema tests. DoD: PostgreSQL отклоняет каждое нарушение.
+- [x] 5.3 Уточнить REST-контракт: `Location` для `201` и `application/problem+json` для ошибок. Файлы: `ListingController.java`, OpenAPI/integration tests. DoD: headers, runtime contract и generated contract подтверждены тестами.
+- [x] 5.4 Добавить структурированный business log успешной публикации без токенов или персональных данных. Файлы: `ListingService.java`, service tests при необходимости. DoD: лог содержит только listing id и organization id после сохранения.
+- [x] 5.5 Зафиксировать password minimum 8 в change artifacts и подтвердить auth validation tests. Файлы: `PasswordValidator.java`, OpenSpec artifacts. DoD: production validation, message, OpenAPI и тест используют один минимум.
+- [x] 5.6 Перегенерировать OpenAPI, запустить полный test suite, strict OpenSpec validation и live PostgreSQL smoke. DoD: все проверки проходят, generated diff отражает только согласованный контракт.
