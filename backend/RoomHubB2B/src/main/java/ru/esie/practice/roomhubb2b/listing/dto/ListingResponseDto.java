@@ -16,6 +16,7 @@ public record ListingResponseDto(
         @Schema(description = "Public listing image URL", example = "https://example.com/listing-42.jpg", nullable = true)
         String imageUrl,
         @Schema(description = "Detailed listing description", nullable = true) String description,
-        @Schema(description = "Street address", example = "Lenina Avenue, 10") String address
+        @Schema(description = "Street address", example = "Lenina Avenue, 10") String address,
+        @Schema(description = "Owner organization identifier", example = "17", nullable = true) Long ownerOrganizationId
 ) {
 }

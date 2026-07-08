@@ -49,7 +49,8 @@ class OpenApiContractTests {
                         )))
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.imageUrl").exists())
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.description").exists())
-                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.address").exists());
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.address").exists())
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationId").exists());
     }
 
     @Test
@@ -131,7 +132,7 @@ class OpenApiContractTests {
         mockMvc.perform(get("/api/listings"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].length()").value(9))
+                .andExpect(jsonPath("$[0].length()").value(10))
                 .andExpect(jsonPath("$[0].id").exists())
                 .andExpect(jsonPath("$[0].title").exists())
                 .andExpect(jsonPath("$[0].city").exists())
@@ -197,7 +198,6 @@ class OpenApiContractTests {
                 .andExpect(jsonPath("$['paths']['/api/bookings/{bookingId}/cancel']['post']").exists())
                 .andExpect(jsonPath("$.components.schemas.CreateBookingRequestDto.properties.tenantOrganizationId")
                         .doesNotExist())
-                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationId")
-                        .doesNotExist());
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationId").exists());
     }
 }

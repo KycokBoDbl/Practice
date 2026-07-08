@@ -85,10 +85,11 @@ class ListingPublicationApiIntegrationTest {
                         .content(validRequest(tenant.getId())))
                 .andExpect(status().isCreated())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.length()").value(9))
+                .andExpect(jsonPath("$.length()").value(10))
                 .andExpect(jsonPath("$.title").value("Publication meeting room"))
                 .andExpect(jsonPath("$.pricePerHour").value(2500.00))
                 .andExpect(jsonPath("$.spaceType").value("MEETING_ROOM"))
+                .andExpect(jsonPath("$.ownerOrganizationId").value(landlord.getId()))
                 .andReturn();
 
         long listingId = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asLong();

@@ -67,6 +67,7 @@ public class ListingService {
     }
 
     private ListingResponseDto toResponseDto(ListingEntity listing) {
+        OrganizationEntity owner = listing.getOwnerOrganization();
         return new ListingResponseDto(
                 listing.getId(),
                 listing.getTitle(),
@@ -76,7 +77,8 @@ public class ListingService {
                 listing.getSpaceType(),
                 listing.getImageUrl(),
                 listing.getDescription(),
-                listing.getAddress()
+                listing.getAddress(),
+                owner == null ? null : owner.getId()
         );
     }
 }
