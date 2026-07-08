@@ -109,11 +109,17 @@ export function SpacesPage() {
               to={`/spaces/${listing.id}`}
               className={styles.card}
             >
-              <img
-                className={styles.image}
-                src={listing.imageUrl}
-                alt={listing.title}
-              />
+              {listing.imageUrl?.trim() ? (
+                <img
+                  className={styles.image}
+                  src={listing.imageUrl}
+                  alt={listing.title}
+                />
+              ) : (
+                <div className={styles.imagePlaceholder} aria-hidden="true">
+                  <span>Нет изображения</span>
+                </div>
+              )}
 
               <div className={styles.content}>
                 <h2 className={styles.cardTitle}>{listing.title}</h2>

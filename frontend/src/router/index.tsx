@@ -11,6 +11,7 @@ import { BookingDetailPage } from '../pages/BookingDetail/BookingDetailPage'
 import { BookingInboxPage } from '../pages/BookingInbox/BookingInboxPage'
 import { ProfilePage } from '../pages/Profile/ProfilePage'
 import { SpacePage } from '../pages/Spaces/SpacePage'
+import { ListingPublicationPage } from '../pages/ListingPublication/ListingPublicationPage'
 
 export const router = createBrowserRouter([
   {
@@ -43,6 +44,14 @@ export const router = createBrowserRouter([
           {
             index: true,
             element: <Navigate to="/" replace />,
+          },
+          {
+            path: 'new',
+            element: (
+              <RequireAuth>
+                <ListingPublicationPage />
+              </RequireAuth>
+            ),
           },
           {
             path: ':id',
