@@ -1,30 +1,25 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 
 import {
   approveBooking,
   cancelBooking,
+  confirmBooking,
   getBooking,
   getBookingHistory,
-  confirmBooking,
   parseBookingApiError,
   rejectBooking,
 } from '../../api/bookings'
 import { useAuth } from '../../auth/useAuth'
-import type {
-  BookingHistoryResponse,
-  BookingResponse,
-} from '../../types/booking'
+import type { BookingHistoryResponse, BookingResponse } from '../../types/booking'
 import styles from './BookingDetailPage.module.css'
 
-type BookingDetailState =
-  | 'loading'
-  | 'loaded'
-  | 'notFound'
-  | 'unavailable'
-  | 'error'
-
+type BookingDetailState = 'loading' | 'loaded' | 'notFound' | 'unavailable' | 'error'
 type BookingAction = 'approve' | 'reject' | 'confirm' | 'cancel'
+
+type BookingDetailLocationState = {
+  from?: string
+}
 
 const DATE_TIME_FORMAT = new Intl.DateTimeFormat('ru-RU', {
   dateStyle: 'medium',
@@ -76,6 +71,7 @@ function isTerminalStatus(status: BookingResponse['status']) {
 
 export function BookingDetailPage() {
   const { bookingId } = useParams()
+  const location = useLocation()
   const { profile, loading: authLoading } = useAuth()
   const [booking, setBooking] = useState<BookingResponse | null>(null)
   const [history, setHistory] = useState<BookingHistoryResponse[]>([])
@@ -138,7 +134,7 @@ export function BookingDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [bookingId])
+  }, [bookingId, location.key])
 
   async function refreshBooking() {
     const targetBookingId = bookingId ?? ''
@@ -225,11 +221,20 @@ export function BookingDetailPage() {
       (canShowLandlordActions || canShowTenantActions),
   )
 
+  const locationState = location.state as BookingDetailLocationState | null
+  const backTarget =
+    locationState?.from ??
+    (booking ? `/booking/${booking.listingId}` : '/bookings')
+  const backLabel =
+    locationState?.from === '/bookings'
+      ? '← Вернуться к заявкам'
+      : '← Вернуться к бронированию помещения'
+
   if (state === 'loading') {
     return (
       <main className={styles.page}>
-        <Link to="/" className={styles.backLink}>
-          ← Вернуться к каталогу
+        <Link to={backTarget} className={styles.backLink}>
+          {backLabel}
         </Link>
         <div className={`${styles.panel} ${styles.stateBox}`}>Загрузка брони...</div>
       </main>
@@ -239,8 +244,8 @@ export function BookingDetailPage() {
   if (state === 'notFound') {
     return (
       <main className={styles.page}>
-        <Link to="/" className={styles.backLink}>
-          ← Вернуться к каталогу
+        <Link to={backTarget} className={styles.backLink}>
+          {backLabel}
         </Link>
         <div className={`${styles.panel} ${styles.stateBox} ${styles.error}`}>
           <h1 className={styles.title}>Бронь не найдена</h1>
@@ -255,8 +260,8 @@ export function BookingDetailPage() {
   if (state === 'unavailable') {
     return (
       <main className={styles.page}>
-        <Link to="/" className={styles.backLink}>
-          ← Вернуться к каталогу
+        <Link to={backTarget} className={styles.backLink}>
+          {backLabel}
         </Link>
         <div className={`${styles.panel} ${styles.stateBox} ${styles.warning}`}>
           <h1 className={styles.title}>Бронь недоступна</h1>
@@ -271,8 +276,8 @@ export function BookingDetailPage() {
   if (state === 'error' || !booking) {
     return (
       <main className={styles.page}>
-        <Link to="/" className={styles.backLink}>
-          ← Вернуться к каталогу
+        <Link to={backTarget} className={styles.backLink}>
+          {backLabel}
         </Link>
         <div className={`${styles.panel} ${styles.stateBox} ${styles.error}`}>
           <h1 className={styles.title}>Не удалось загрузить бронь</h1>
@@ -286,8 +291,8 @@ export function BookingDetailPage() {
 
   return (
     <main className={styles.page}>
-      <Link to={`/booking/${booking.listingId}`} className={styles.backLink}>
-        ← Вернуться к броне помещения
+      <Link to={backTarget} className={styles.backLink}>
+        {backLabel}
       </Link>
 
       <section className={styles.panel}>

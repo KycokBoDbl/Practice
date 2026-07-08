@@ -4,6 +4,8 @@ import { api } from './client'
 import { parseApiError, type ParsedProblemDetail } from './problemDetails'
 import type {
   BookingErrorKind,
+  BookingInboxFilters,
+  BookingInboxItem,
   BookingHistoryResponse,
   BookingResponse,
   BookingTransitionCommand,
@@ -58,6 +60,15 @@ export async function createBooking(
   request: CreateBookingRequest,
 ): Promise<BookingResponse> {
   const response = await api.post<BookingResponse>('/api/bookings', request)
+  return response.data
+}
+
+export async function getBookingInbox(
+  filters: BookingInboxFilters = {},
+): Promise<BookingInboxItem[]> {
+  const response = await api.get<BookingInboxItem[]>('/api/bookings', {
+    params: filters.status ? { status: filters.status } : undefined,
+  })
   return response.data
 }
 

@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.esie.practice.roomhubb2b.auth.OrganizationEntity;
 import ru.esie.practice.roomhubb2b.auth.OrganizationRepository;
 import ru.esie.practice.roomhubb2b.auth.UserRole;
+import ru.esie.practice.roomhubb2b.booking.dto.BookingInboxItemDto;
 import ru.esie.practice.roomhubb2b.booking.dto.BookingHistoryResponseDto;
 import ru.esie.practice.roomhubb2b.booking.dto.BookingResponseDto;
 import ru.esie.practice.roomhubb2b.booking.dto.CreateBookingRequestDto;
@@ -104,6 +105,21 @@ public class BookingService {
         return historyRepository.findByBookingIdOrderByCreatedAtAscIdAsc(bookingId).stream()
                 .map(BookingHistoryResponseDto::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingInboxItemDto> getInbox(BookingActor actor) {
+        if (actor.role() == UserRole.TENANT) {
+            return bookingRepository.findInboxByTenantOrganizationId(actor.organizationId()).stream()
+                    .map(BookingInboxItemDto::from)
+                    .toList();
+        }
+        if (actor.role() == UserRole.LANDLORD) {
+            return bookingRepository.findInboxByLandlordOrganizationId(actor.organizationId()).stream()
+                    .map(BookingInboxItemDto::from)
+                    .toList();
+        }
+        throw new BookingForbiddenException("Role cannot access bookings");
     }
 
     @Transactional

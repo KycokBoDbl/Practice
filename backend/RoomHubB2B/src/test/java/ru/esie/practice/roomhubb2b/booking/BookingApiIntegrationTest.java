@@ -173,6 +173,65 @@ class BookingApiIntegrationTest {
                 .andExpect(jsonPath("$.status").value(400));
     }
 
+    @Test
+    void exposesParticipantInboxWithVisibilityFilteringAndStableShape() throws Exception {
+        long requestedBookingId = createBooking();
+        long confirmedBookingId = createBooking();
+
+        mockMvc.perform(post("/api/bookings/{id}/approve", confirmedBookingId)
+                        .header("Authorization", "Bearer " + landlordToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/bookings/{id}/confirm", confirmedBookingId)
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/bookings")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(confirmedBookingId))
+                .andExpect(jsonPath("$[0].listingId").value(listingId))
+                .andExpect(jsonPath("$[0].listingTitle").isNotEmpty())
+                .andExpect(jsonPath("$[0].status").value("CONFIRMED"))
+                .andExpect(jsonPath("$[0].startAt").value("2035-01-01T10:00"))
+                .andExpect(jsonPath("$[0].endAt").value("2035-01-01T13:00"))
+                .andExpect(jsonPath("$[0].pricePerHour").isNumber())
+                .andExpect(jsonPath("$[0].totalPrice").isNumber())
+                .andExpect(jsonPath("$[0].tenantOrganizationName").value(tenant.getLegalName()))
+                .andExpect(jsonPath("$[0].landlordOrganizationName").value(landlord.getLegalName()))
+                .andExpect(jsonPath("$[0].createdAt").isNotEmpty())
+                .andExpect(jsonPath("$[0].updatedAt").isNotEmpty())
+                .andExpect(jsonPath("$[1].id").value(requestedBookingId))
+                .andExpect(jsonPath("$[1].status").value("REQUESTED"));
+
+        mockMvc.perform(get("/api/bookings")
+                        .header("Authorization", "Bearer " + landlordToken)
+                        .param("status", "CONFIRMED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(confirmedBookingId))
+                .andExpect(jsonPath("$[0].status").value("CONFIRMED"));
+    }
+
+    @Test
+    void keepsInboxIsolatedFromOtherOrganizationsAndRequiresAuthentication() throws Exception {
+        long bookingId = createBooking();
+
+        mockMvc.perform(get("/api/bookings")
+                        .header("Authorization", "Bearer " + outsiderToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        mockMvc.perform(get("/api/bookings"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
+
+        mockMvc.perform(get("/api/bookings/{id}", bookingId)
+                        .header("Authorization", "Bearer " + outsiderToken))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
     private long createBooking() throws Exception {
         MvcResult result = mockMvc.perform(post("/api/bookings")
                         .header("Authorization", "Bearer " + tenantToken)
