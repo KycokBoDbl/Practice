@@ -20,6 +20,149 @@
     "description" : "Legal entity registration and authentication"
   } ],
   "paths" : {
+    "/api/listings/{listingId}" : {
+      "put" : {
+        "tags" : [ "Listings" ],
+        "summary" : "Update an owned commercial space listing",
+        "operationId" : "updateListing",
+        "parameters" : [ {
+          "name" : "listingId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateListingRequestDto"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "Listing updated",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ListingResponseDto"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid listing request",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Authentication required",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Only landlords can manage listings",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Listing not found",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      },
+      "delete" : {
+        "tags" : [ "Listings" ],
+        "summary" : "Delete an owned commercial space listing",
+        "operationId" : "deleteListing",
+        "parameters" : [ {
+          "name" : "listingId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Listing deleted"
+          },
+          "401" : {
+            "description" : "Authentication required",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Only landlords can manage listings",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Listing not found",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Listing has booking history",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/listings" : {
       "get" : {
         "tags" : [ "Listings" ],
@@ -98,6 +241,114 @@
           },
           "403" : {
             "description" : "Only landlords can publish listings",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/listings/{listingId}/hide" : {
+      "post" : {
+        "tags" : [ "Listings" ],
+        "summary" : "Hide an owned commercial space listing",
+        "operationId" : "hideListing",
+        "parameters" : [ {
+          "name" : "listingId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Listing hidden"
+          },
+          "401" : {
+            "description" : "Authentication required",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Only landlords can manage listings",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Listing not found",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/listings/{listingId}/activate" : {
+      "post" : {
+        "tags" : [ "Listings" ],
+        "summary" : "Reactivate an owned commercial space listing",
+        "operationId" : "activateListing",
+        "parameters" : [ {
+          "name" : "listingId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Listing activated"
+          },
+          "401" : {
+            "description" : "Authentication required",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Only landlords can manage listings",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Listing not found",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -1064,13 +1315,13 @@
   },
   "components" : {
     "schemas" : {
-      "CreateListingRequestDto" : {
+      "UpdateListingRequestDto" : {
         "type" : "object",
-        "description" : "Commercial space listing publication request",
+        "description" : "Commercial space listing update request",
         "properties" : {
           "title" : {
             "type" : "string",
-            "example" : "Meeting room in the city center",
+            "example" : "Updated meeting room",
             "maxLength" : 255,
             "minLength" : 0
           },
@@ -1092,13 +1343,13 @@
           },
           "pricePerHour" : {
             "type" : "number",
-            "example" : 2500.0,
+            "example" : 3000.0,
             "minimum" : 0.01
           },
           "capacity" : {
             "type" : "integer",
             "format" : "int32",
-            "example" : 20,
+            "example" : 24,
             "minimum" : 1
           },
           "spaceType" : {
@@ -1199,6 +1450,56 @@
             "additionalProperties" : { }
           }
         }
+      },
+      "CreateListingRequestDto" : {
+        "type" : "object",
+        "description" : "Commercial space listing publication request",
+        "properties" : {
+          "title" : {
+            "type" : "string",
+            "example" : "Meeting room in the city center",
+            "maxLength" : 255,
+            "minLength" : 0
+          },
+          "description" : {
+            "type" : [ "string", "null" ],
+            "example" : "Screen, flip chart and coffee area"
+          },
+          "city" : {
+            "type" : "string",
+            "example" : "Barnaul",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "address" : {
+            "type" : "string",
+            "example" : "Lenina Avenue, 10",
+            "maxLength" : 255,
+            "minLength" : 0
+          },
+          "pricePerHour" : {
+            "type" : "number",
+            "example" : 2500.0,
+            "minimum" : 0.01
+          },
+          "capacity" : {
+            "type" : "integer",
+            "format" : "int32",
+            "example" : 20,
+            "minimum" : 1
+          },
+          "spaceType" : {
+            "type" : "string",
+            "enum" : [ "MEETING_ROOM", "CONFERENCE_HALL", "CLASSROOM", "LOFT", "SHOWROOM" ],
+            "example" : "MEETING_ROOM"
+          },
+          "imageUrl" : {
+            "type" : [ "string", "null" ],
+            "example" : "https://example.com/listing-42.jpg",
+            "pattern" : "^https?://\\S+$"
+          }
+        },
+        "required" : [ "address", "capacity", "city", "pricePerHour", "spaceType", "title" ]
       },
       "CreateBookingRequestDto" : {
         "type" : "object",

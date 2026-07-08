@@ -150,6 +150,34 @@ public class ListingEntity {
         return ownerOrganization;
     }
 
+    public void updateDetails(
+            String title,
+            String description,
+            String city,
+            String address,
+            BigDecimal pricePerHour,
+            Integer capacity,
+            SpaceType spaceType,
+            String imageUrl
+    ) {
+        this.title = title;
+        this.description = description;
+        this.city = city;
+        this.address = address;
+        this.pricePerHour = pricePerHour;
+        this.capacity = capacity;
+        this.spaceType = spaceType;
+        this.imageUrl = imageUrl;
+    }
+
+    public void archive() {
+        this.status = ListingStatus.ARCHIVED;
+    }
+
+    public void activate() {
+        this.status = ListingStatus.PUBLISHED;
+    }
+
     public void assignOwner(OrganizationEntity ownerOrganization) {
         this.ownerOrganization = ownerOrganization;
     }

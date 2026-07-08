@@ -16,6 +16,18 @@ public interface ListingRepository extends JpaRepository<ListingEntity, Long> {
     @EntityGraph(attributePaths = "ownerOrganization")
     Optional<ListingEntity> findByIdAndStatus(Long id, ListingStatus status);
 
+    @EntityGraph(attributePaths = "ownerOrganization")
+    @Query("""
+            SELECT listing
+            FROM ListingEntity listing
+            WHERE listing.id = :id
+              AND listing.ownerOrganization.id = :ownerOrganizationId
+            """)
+    Optional<ListingEntity> findByIdAndOwnerOrganizationId(
+            @Param("id") Long id,
+            @Param("ownerOrganizationId") Long ownerOrganizationId
+    );
+
     @Query(value = "SELECT * FROM listings WHERE id = :id FOR UPDATE", nativeQuery = true)
     Optional<ListingEntity> findLockedById(@Param("id") Long id);
 }

@@ -97,6 +97,66 @@ class OpenApiContractTests {
     }
 
     @Test
+    void exposesProtectedListingManagementContract() throws Exception {
+        String listing = "$['paths']['/api/listings/{listingId}']";
+        String update = listing + "['put']";
+        String delete = listing + "['delete']";
+        String hide = "$['paths']['/api/listings/{listingId}/hide']['post']";
+        String activate = "$['paths']['/api/listings/{listingId}/activate']['post']";
+
+        mockMvc.perform(get("/api/openapi").accept("application/json"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(update + ".operationId").value("updateListing"))
+                .andExpect(jsonPath(update + ".security[0].bearerAuth").isArray())
+                .andExpect(jsonPath(update + ".parameters[?(@.name == 'listingId')]").exists())
+                .andExpect(jsonPath(update + ".requestBody.required").value(true))
+                .andExpect(jsonPath(update + ".requestBody.content['application/json'].schema['$ref']")
+                        .value("#/components/schemas/UpdateListingRequestDto"))
+                .andExpect(jsonPath(update + ".responses['200'].content['application/json'].schema['$ref']")
+                        .value("#/components/schemas/ListingResponseDto"))
+                .andExpect(jsonPath(update + ".responses['400']").exists())
+                .andExpect(jsonPath(update + ".responses['401']").exists())
+                .andExpect(jsonPath(update + ".responses['403']").exists())
+                .andExpect(jsonPath(update + ".responses['404']").exists())
+                .andExpect(jsonPath(hide + ".operationId").value("hideListing"))
+                .andExpect(jsonPath(hide + ".security[0].bearerAuth").isArray())
+                .andExpect(jsonPath(hide + ".parameters[?(@.name == 'listingId')]").exists())
+                .andExpect(jsonPath(hide + ".responses['204']").exists())
+                .andExpect(jsonPath(hide + ".responses['401']").exists())
+                .andExpect(jsonPath(hide + ".responses['403']").exists())
+                .andExpect(jsonPath(hide + ".responses['404']").exists())
+                .andExpect(jsonPath(activate + ".operationId").value("activateListing"))
+                .andExpect(jsonPath(activate + ".security[0].bearerAuth").isArray())
+                .andExpect(jsonPath(activate + ".parameters[?(@.name == 'listingId')]").exists())
+                .andExpect(jsonPath(activate + ".responses['204']").exists())
+                .andExpect(jsonPath(activate + ".responses['401']").exists())
+                .andExpect(jsonPath(activate + ".responses['403']").exists())
+                .andExpect(jsonPath(activate + ".responses['404']").exists())
+                .andExpect(jsonPath(delete + ".operationId").value("deleteListing"))
+                .andExpect(jsonPath(delete + ".security[0].bearerAuth").isArray())
+                .andExpect(jsonPath(delete + ".parameters[?(@.name == 'listingId')]").exists())
+                .andExpect(jsonPath(delete + ".responses['204']").exists())
+                .andExpect(jsonPath(delete + ".responses['401']").exists())
+                .andExpect(jsonPath(delete + ".responses['403']").exists())
+                .andExpect(jsonPath(delete + ".responses['404']").exists())
+                .andExpect(jsonPath(delete + ".responses['409']").exists())
+                .andExpect(jsonPath("$.components.schemas.UpdateListingRequestDto.required")
+                        .value(org.hamcrest.Matchers.containsInAnyOrder(
+                                "title", "city", "address", "pricePerHour", "capacity", "spaceType"
+                        )))
+                .andExpect(jsonPath("$.components.schemas.UpdateListingRequestDto.properties.title").exists())
+                .andExpect(jsonPath("$.components.schemas.UpdateListingRequestDto.properties.pricePerHour").exists())
+                .andExpect(jsonPath("$.components.schemas.UpdateListingRequestDto.properties.spaceType").exists())
+                .andExpect(jsonPath("$.components.schemas.UpdateListingRequestDto.properties.ownerOrganizationId")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.components.schemas.UpdateListingRequestDto.properties.status")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.components.schemas.UpdateListingRequestDto.properties.createdAt")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationId").exists());
+    }
+
+    @Test
     void exposesHourlyListingAvailabilityInOpenApiContract() throws Exception {
         String operation = "$['paths']['/api/listings/{listingId}/availability']['get']";
 
