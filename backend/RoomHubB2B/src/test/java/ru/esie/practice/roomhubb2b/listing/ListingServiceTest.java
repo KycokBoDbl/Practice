@@ -71,6 +71,7 @@ class ListingServiceTest {
         assertThat(saved.getCreatedAt()).isEqualTo(LocalDateTime.ofInstant(NOW, ZoneOffset.UTC));
         assertThat(response.title()).isEqualTo("Meeting room");
         assertThat(response.pricePerHour()).isEqualByComparingTo("2500.00");
+        assertThat(response.ownerOrganizationName()).isEqualTo("Landlord LLC");
     }
 
     @Test
@@ -110,6 +111,36 @@ class ListingServiceTest {
         assertThat(listing.getCreatedAt()).isEqualTo(createdAt);
         assertThat(listing.getOwnerOrganization()).isSameAs(owner);
         assertThat(response.title()).isEqualTo("Updated room");
+        assertThat(response.ownerOrganizationName()).isEqualTo("Landlord LLC");
+    }
+
+    @Test
+    void returnsOwnedPublishedAndArchivedListingsForLandlord() {
+        ListingEntity published = ownedListing();
+        ListingEntity archived = ownedListing();
+        archived.archive();
+        when(listingRepository.findOwnedByStatuses(
+                17L,
+                java.util.List.of(ListingStatus.PUBLISHED, ListingStatus.ARCHIVED)
+        )).thenReturn(java.util.List.of(published, archived));
+
+        var response = service.getOwnedListings(new ListingActor(17L, UserRole.LANDLORD));
+
+        assertThat(response).hasSize(2);
+        assertThat(response)
+                .extracting("ownerOrganizationName")
+                .containsExactly("Landlord LLC", "Landlord LLC");
+        assertThat(response)
+                .extracting("status")
+                .containsExactly(ListingStatus.PUBLISHED, ListingStatus.ARCHIVED);
+    }
+
+    @Test
+    void rejectsTenantOwnedListingLookupBeforeRepositoryCall() {
+        assertThatThrownBy(() -> service.getOwnedListings(new ListingActor(17L, UserRole.TENANT)))
+                .isInstanceOf(ListingForbiddenException.class);
+
+        verify(listingRepository, never()).findOwnedByStatuses(any(), any());
     }
 
     @Test

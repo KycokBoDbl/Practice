@@ -1,12 +1,13 @@
 package ru.esie.practice.roomhubb2b.listing.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import ru.esie.practice.roomhubb2b.listing.ListingStatus;
 import ru.esie.practice.roomhubb2b.listing.SpaceType;
 
 import java.math.BigDecimal;
 
-@Schema(description = "Published commercial space listing")
-public record ListingResponseDto(
+@Schema(description = "Owned commercial space listing for landlord management")
+public record OwnedListingResponseDto(
         @Schema(description = "Listing identifier", example = "42") Long id,
         @Schema(description = "Listing title", example = "Meeting room in the city center") String title,
         @Schema(description = "City where the space is located", example = "Barnaul") String city,
@@ -18,6 +19,7 @@ public record ListingResponseDto(
         @Schema(description = "Detailed listing description", nullable = true) String description,
         @Schema(description = "Street address", example = "Lenina Avenue, 10") String address,
         @Schema(description = "Owner organization display name", example = "Landlord LLC", nullable = true)
-        String ownerOrganizationName
+        String ownerOrganizationName,
+        @Schema(description = "Listing lifecycle status", example = "PUBLISHED") ListingStatus status
 ) {
 }
