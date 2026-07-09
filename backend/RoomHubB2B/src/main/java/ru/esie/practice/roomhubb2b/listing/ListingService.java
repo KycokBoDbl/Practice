@@ -151,7 +151,7 @@ public class ListingService {
                 listing.getImageUrl(),
                 listing.getDescription(),
                 listing.getAddress(),
-                owner == null ? null : owner.getId()
+                owner == null ? null : owner.getLegalName()
         );
     }
 }

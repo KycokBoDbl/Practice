@@ -102,7 +102,8 @@ class ListingPublicationApiIntegrationTest {
                 .andExpect(jsonPath("$.title").value("Publication meeting room"))
                 .andExpect(jsonPath("$.pricePerHour").value(2500.00))
                 .andExpect(jsonPath("$.spaceType").value("MEETING_ROOM"))
-                .andExpect(jsonPath("$.ownerOrganizationId").value(landlord.getId()))
+                .andExpect(jsonPath("$.ownerOrganizationName").value(landlord.getLegalName()))
+                .andExpect(jsonPath("$.ownerOrganizationId").doesNotExist())
                 .andReturn();
 
         long listingId = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asLong();
@@ -242,7 +243,8 @@ class ListingPublicationApiIntegrationTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.title").value("Updated management room"))
                 .andExpect(jsonPath("$.city").value("Novosibirsk"))
-                .andExpect(jsonPath("$.ownerOrganizationId").value(landlord.getId()));
+                .andExpect(jsonPath("$.ownerOrganizationName").value(landlord.getLegalName()))
+                .andExpect(jsonPath("$.ownerOrganizationId").doesNotExist());
 
         ListingEntity updated = listingRepository.findById(listing.getId()).orElseThrow();
         assertThat(updated.getTitle()).isEqualTo("Updated management room");

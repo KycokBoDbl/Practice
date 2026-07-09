@@ -71,6 +71,7 @@ class ListingServiceTest {
         assertThat(saved.getCreatedAt()).isEqualTo(LocalDateTime.ofInstant(NOW, ZoneOffset.UTC));
         assertThat(response.title()).isEqualTo("Meeting room");
         assertThat(response.pricePerHour()).isEqualByComparingTo("2500.00");
+        assertThat(response.ownerOrganizationName()).isEqualTo("Landlord LLC");
     }
 
     @Test
@@ -110,6 +111,7 @@ class ListingServiceTest {
         assertThat(listing.getCreatedAt()).isEqualTo(createdAt);
         assertThat(listing.getOwnerOrganization()).isSameAs(owner);
         assertThat(response.title()).isEqualTo("Updated room");
+        assertThat(response.ownerOrganizationName()).isEqualTo("Landlord LLC");
     }
 
     @Test

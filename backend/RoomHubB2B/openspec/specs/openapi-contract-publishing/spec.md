@@ -118,7 +118,7 @@ Runtime OpenAPI SHALL describe the protected landlord listing management operati
 #### Scenario: Listing management schemas use frontend-compatible field names
 - **WHEN** a frontend developer inspects the listing management schemas
 - **THEN** listing request and response fields use existing camelCase names
-- **AND** `ListingResponseDto` continues to expose `ownerOrganizationId`
+- **AND** `ListingResponseDto` exposes `ownerOrganizationName` and does not expose `ownerOrganizationId`
 - **AND** management request schemas do not expose `ownerOrganizationId`, `status`, or `createdAt` as writable fields
 
 #### Scenario: Exported contract contains listing management changes

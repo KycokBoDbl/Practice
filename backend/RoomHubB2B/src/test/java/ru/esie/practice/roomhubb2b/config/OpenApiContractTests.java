@@ -50,7 +50,9 @@ class OpenApiContractTests {
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.imageUrl").exists())
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.description").exists())
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.address").exists())
-                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationId").exists());
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationName").exists())
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationId")
+                        .doesNotExist());
     }
 
     @Test
@@ -153,7 +155,9 @@ class OpenApiContractTests {
                         .doesNotExist())
                 .andExpect(jsonPath("$.components.schemas.UpdateListingRequestDto.properties.createdAt")
                         .doesNotExist())
-                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationId").exists());
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationName").exists())
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationId")
+                        .doesNotExist());
     }
 
     @Test
@@ -258,6 +262,8 @@ class OpenApiContractTests {
                 .andExpect(jsonPath("$['paths']['/api/bookings/{bookingId}/cancel']['post']").exists())
                 .andExpect(jsonPath("$.components.schemas.CreateBookingRequestDto.properties.tenantOrganizationId")
                         .doesNotExist())
-                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationId").exists());
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationName").exists())
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationId")
+                        .doesNotExist());
     }
 }
