@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import ru.esie.practice.roomhubb2b.listing.dto.CreateListingRequestDto;
 import ru.esie.practice.roomhubb2b.listing.dto.ListingResponseDto;
+import ru.esie.practice.roomhubb2b.listing.dto.OwnedListingResponseDto;
 import ru.esie.practice.roomhubb2b.listing.dto.UpdateListingRequestDto;
 
 import java.net.URI;
@@ -51,6 +52,24 @@ public class ListingController {
     )
     public List<ListingResponseDto> getListings() {
         return listingService.getPublishedListings();
+    }
+
+    @GetMapping("/api/listings/owned")
+    @Operation(operationId = "getOwnedListings", summary = "List owned commercial space listings")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Owned listings",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = OwnedListingResponseDto.class)))),
+            @ApiResponse(responseCode = "401", description = "Authentication required",
+                    content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                            schema = @Schema(implementation = ProblemDetail.class))),
+            @ApiResponse(responseCode = "403", description = "Only landlords can list owned listings",
+                    content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                            schema = @Schema(implementation = ProblemDetail.class)))
+    })
+    public List<OwnedListingResponseDto> getOwnedListings(@AuthenticationPrincipal Jwt jwt) {
+        return listingService.getOwnedListings(ListingActor.from(jwt));
     }
 
     @PostMapping("/api/listings")

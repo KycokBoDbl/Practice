@@ -261,6 +261,41 @@ class ListingPublicationApiIntegrationTest {
     }
 
     @Test
+    void listsOwnedPublishedAndHiddenListingsForLandlord() throws Exception {
+        ListingEntity published = listing("Owned visible room", landlord);
+        ListingEntity hidden = listing("Owned hidden room", landlord);
+        hidden.archive();
+        listingRepository.saveAndFlush(hidden);
+        ListingEntity other = listing("Other landlord room", otherLandlord);
+
+        mockMvc.perform(get("/api/listings/owned")
+                        .header("Authorization", "Bearer " + landlordToken))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[?(@.id == " + published.getId() + ")].title")
+                        .value("Owned visible room"))
+                .andExpect(jsonPath("$[?(@.id == " + published.getId() + ")].status")
+                        .value("PUBLISHED"))
+                .andExpect(jsonPath("$[?(@.id == " + hidden.getId() + ")].title")
+                        .value("Owned hidden room"))
+                .andExpect(jsonPath("$[?(@.id == " + hidden.getId() + ")].status")
+                        .value("ARCHIVED"))
+                .andExpect(jsonPath("$[?(@.id == " + hidden.getId() + ")].ownerOrganizationName")
+                        .value(landlord.getLegalName()))
+                .andExpect(jsonPath("$[?(@.id == " + hidden.getId() + ")].ownerOrganizationId")
+                        .doesNotExist())
+                .andExpect(jsonPath("$[?(@.id == " + other.getId() + ")]").isEmpty());
+
+        mockMvc.perform(get("/api/listings/owned")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/listings/owned"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void rejectsInvalidUpdateWithoutChangingListing() throws Exception {
         ListingEntity listing = listing("Original valid room", landlord);
 

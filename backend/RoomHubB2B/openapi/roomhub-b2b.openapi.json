@@ -1082,6 +1082,51 @@
         }
       }
     },
+    "/api/listings/owned" : {
+      "get" : {
+        "tags" : [ "Listings" ],
+        "summary" : "List owned commercial space listings",
+        "operationId" : "getOwnedListings",
+        "responses" : {
+          "200" : {
+            "description" : "Owned listings",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/OwnedListingResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Authentication required",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Only landlords can list owned listings",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/bookings/{bookingId}" : {
       "get" : {
         "tags" : [ "Bookings" ],
@@ -1716,6 +1761,70 @@
           }
         },
         "required" : [ "busyIntervals", "from", "listingId", "to" ]
+      },
+      "OwnedListingResponseDto" : {
+        "type" : "object",
+        "description" : "Owned commercial space listing for landlord management",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Listing identifier",
+            "example" : 42
+          },
+          "title" : {
+            "type" : "string",
+            "description" : "Listing title",
+            "example" : "Meeting room in the city center"
+          },
+          "city" : {
+            "type" : "string",
+            "description" : "City where the space is located",
+            "example" : "Barnaul"
+          },
+          "pricePerHour" : {
+            "type" : "number",
+            "description" : "Rental price per hour",
+            "example" : 2500.0
+          },
+          "capacity" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Maximum number of guests",
+            "example" : 20
+          },
+          "spaceType" : {
+            "type" : "string",
+            "description" : "Commercial space type",
+            "enum" : [ "MEETING_ROOM", "CONFERENCE_HALL", "CLASSROOM", "LOFT", "SHOWROOM" ],
+            "example" : "MEETING_ROOM"
+          },
+          "imageUrl" : {
+            "type" : [ "string", "null" ],
+            "description" : "Public listing image URL",
+            "example" : "https://example.com/listing-42.jpg"
+          },
+          "description" : {
+            "type" : [ "string", "null" ],
+            "description" : "Detailed listing description"
+          },
+          "address" : {
+            "type" : "string",
+            "description" : "Street address",
+            "example" : "Lenina Avenue, 10"
+          },
+          "ownerOrganizationName" : {
+            "type" : [ "string", "null" ],
+            "description" : "Owner organization display name",
+            "example" : "Landlord LLC"
+          },
+          "status" : {
+            "type" : "string",
+            "description" : "Listing lifecycle status",
+            "enum" : [ "PUBLISHED", "ARCHIVED" ],
+            "example" : "PUBLISHED"
+          }
+        }
       },
       "BookingInboxItemDto" : {
         "type" : "object",

@@ -105,9 +105,20 @@ class OpenApiContractTests {
         String delete = listing + "['delete']";
         String hide = "$['paths']['/api/listings/{listingId}/hide']['post']";
         String activate = "$['paths']['/api/listings/{listingId}/activate']['post']";
+        String owned = "$['paths']['/api/listings/owned']['get']";
 
         mockMvc.perform(get("/api/openapi").accept("application/json"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath(owned + ".operationId").value("getOwnedListings"))
+                .andExpect(jsonPath(owned + ".security[0].bearerAuth").isArray())
+                .andExpect(jsonPath(owned + ".responses['200'].content['application/json'].schema.type")
+                        .value("array"))
+                .andExpect(jsonPath(owned + ".responses['200'].content['application/json'].schema.items['$ref']")
+                        .value("#/components/schemas/OwnedListingResponseDto"))
+                .andExpect(jsonPath(owned + ".responses['401'].content['application/problem+json'].schema['$ref']")
+                        .value("#/components/schemas/ProblemDetail"))
+                .andExpect(jsonPath(owned + ".responses['403'].content['application/problem+json'].schema['$ref']")
+                        .value("#/components/schemas/ProblemDetail"))
                 .andExpect(jsonPath(update + ".operationId").value("updateListing"))
                 .andExpect(jsonPath(update + ".security[0].bearerAuth").isArray())
                 .andExpect(jsonPath(update + ".parameters[?(@.name == 'listingId')]").exists())
@@ -157,6 +168,20 @@ class OpenApiContractTests {
                         .doesNotExist())
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationName").exists())
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationId")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.id").exists())
+                .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.title").exists())
+                .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.city").exists())
+                .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.pricePerHour").exists())
+                .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.capacity").exists())
+                .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.spaceType").exists())
+                .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.imageUrl").exists())
+                .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.description").exists())
+                .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.address").exists())
+                .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.ownerOrganizationName")
+                        .exists())
+                .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.status").exists())
+                .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.ownerOrganizationId")
                         .doesNotExist());
     }
 

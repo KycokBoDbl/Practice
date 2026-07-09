@@ -11,6 +11,7 @@ import ru.esie.practice.roomhubb2b.auth.UserRole;
 import ru.esie.practice.roomhubb2b.booking.BookingRepository;
 import ru.esie.practice.roomhubb2b.listing.dto.CreateListingRequestDto;
 import ru.esie.practice.roomhubb2b.listing.dto.ListingResponseDto;
+import ru.esie.practice.roomhubb2b.listing.dto.OwnedListingResponseDto;
 import ru.esie.practice.roomhubb2b.listing.dto.UpdateListingRequestDto;
 
 import java.time.Clock;
@@ -44,6 +45,19 @@ public class ListingService {
         return listingRepository.findByStatus(ListingStatus.PUBLISHED)
                 .stream()
                 .map(this::toResponseDto)
+                .toList();
+    }
+
+    public List<OwnedListingResponseDto> getOwnedListings(ListingActor actor) {
+        if (actor.role() != UserRole.LANDLORD) {
+            throw new ListingForbiddenException("Role " + actor.role() + " cannot manage listings");
+        }
+        return listingRepository.findOwnedByStatuses(
+                        actor.organizationId(),
+                        List.of(ListingStatus.PUBLISHED, ListingStatus.ARCHIVED)
+                )
+                .stream()
+                .map(this::toOwnedResponseDto)
                 .toList();
     }
 
@@ -152,6 +166,23 @@ public class ListingService {
                 listing.getDescription(),
                 listing.getAddress(),
                 owner == null ? null : owner.getLegalName()
+        );
+    }
+
+    private OwnedListingResponseDto toOwnedResponseDto(ListingEntity listing) {
+        OrganizationEntity owner = listing.getOwnerOrganization();
+        return new OwnedListingResponseDto(
+                listing.getId(),
+                listing.getTitle(),
+                listing.getCity(),
+                listing.getPricePerHour(),
+                listing.getCapacity(),
+                listing.getSpaceType(),
+                listing.getImageUrl(),
+                listing.getDescription(),
+                listing.getAddress(),
+                owner == null ? null : owner.getLegalName(),
+                listing.getStatus()
         );
     }
 }
