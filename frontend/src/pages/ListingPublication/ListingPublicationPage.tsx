@@ -57,7 +57,8 @@ const INITIAL_FORM_STATE: PublicationFormState = {
 const SPACE_TYPE_OPTIONS = Object.entries(SPACE_TYPE_LABELS) as Array<
   [KnownSpaceType, string]
 >
-const FIELD_ORDER: Array<keyof PublicationFormErrors> = [
+
+const FIELD_ORDER: Array<keyof PublicationFormState> = [
   'title',
   'spaceType',
   'city',
@@ -67,6 +68,7 @@ const FIELD_ORDER: Array<keyof PublicationFormErrors> = [
   'description',
   'imageUrl',
 ]
+
 const FIELD_IDS: Record<keyof PublicationFormState, string> = {
   title: 'publication-title',
   spaceType: 'publication-space-type',
@@ -208,6 +210,10 @@ export function ListingPublicationPage() {
   const pricePreview = formatPrice(form.pricePerHour)
   const imageUrl = form.imageUrl.trim()
   const canPreviewImage = imageUrl !== '' && isValidHttpUrl(imageUrl)
+  const previewDescription = buildPublicationDescription(
+    form.description,
+    selectedAmenities,
+  )
 
   function scrollToFirstError(nextErrors: PublicationFormErrors) {
     const firstInvalidField = FIELD_ORDER.find((field) => nextErrors[field])
@@ -216,9 +222,7 @@ export function ListingPublicationPage() {
       return
     }
 
-    const fieldElement = document.getElementById(
-      FIELD_IDS[firstInvalidField as keyof PublicationFormState],
-    )
+    const fieldElement = document.getElementById(FIELD_IDS[firstInvalidField])
 
     if (!fieldElement) {
       return
@@ -283,10 +287,7 @@ export function ListingPublicationPage() {
         address: form.address.trim(),
         capacity: Number(form.capacity),
         pricePerHour: Number(form.pricePerHour),
-        description: buildPublicationDescription(
-          form.description,
-          selectedAmenities,
-        ),
+        description: previewDescription,
         imageUrl: normalizeOptionalValue(form.imageUrl),
       })
 
@@ -316,7 +317,7 @@ export function ListingPublicationPage() {
   if (profile?.role !== 'LANDLORD') {
     return (
       <main className={styles.page}>
-        <section className={`${styles.panel} ${styles.restrictedPanel}`}>
+        <section className={styles.panel}>
           <p className={styles.eyebrow}>Публикация объявления</p>
           <h1>Недоступно для вашей роли</h1>
           <p className={styles.text}>
@@ -333,276 +334,344 @@ export function ListingPublicationPage() {
   return (
     <main className={styles.page}>
       <section className={styles.header}>
-        <p className={styles.eyebrow}>Публикация объявления</p>
-        <h1>Новое помещение</h1>
-        <p className={styles.text}>
-          Заполните данные помещения, чтобы опубликовать его в каталоге.
-        </p>
+        <div>
+          <p className={styles.eyebrow}>Публикация объявления</p>
+          <h1>Новое помещение</h1>
+          <p className={styles.text}>
+            Заполните данные слева, а справа сразу проверяйте, как объявление будет выглядеть в
+            каталоге.
+          </p>
+        </div>
+
+        <Link to="/my-listings" className={styles.ghostLink}>
+          К моим объявлениям
+        </Link>
       </section>
 
-      <form className={styles.form} onSubmit={handleSubmit} noValidate>
-        <div className={styles.grid}>
-          <label className={styles.field}>
-            <span>Название</span>
-            <input
-              id={FIELD_IDS.title}
-              type="text"
-              value={form.title}
-              onChange={(event) => updateField('title', event.target.value)}
-              aria-invalid={errors.title ? 'true' : undefined}
-              aria-describedby={errors.title ? 'publication-title-error' : undefined}
-              autoComplete="off"
-            />
-            {errors.title && (
-              <small id="publication-title-error" className={styles.error}>
-                {errors.title}
-              </small>
-            )}
-          </label>
+      <form className={styles.layout} onSubmit={handleSubmit} noValidate>
+        <section className={styles.editorColumn}>
+          <article className={styles.editorSection}>
+            <div className={styles.sectionHeader}>
+              <h2>Основное</h2>
+              <p>Название, тип помещения, город, адрес, вместимость и стоимость.</p>
+            </div>
 
-          <label className={styles.field}>
-            <span>Тип помещения</span>
-            <select
-              id={FIELD_IDS.spaceType}
-              value={form.spaceType}
-              onChange={(event) =>
-                updateField('spaceType', event.target.value as KnownSpaceType)
-              }
-              aria-invalid={errors.spaceType ? 'true' : undefined}
-              aria-describedby={
-                errors.spaceType ? 'publication-space-type-error' : undefined
-              }
-            >
-              {SPACE_TYPE_OPTIONS.map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
+            <div className={styles.grid}>
+              <label className={styles.field}>
+                <span>Название</span>
+                <input
+                  id={FIELD_IDS.title}
+                  type="text"
+                  value={form.title}
+                  onChange={(event) => updateField('title', event.target.value)}
+                  aria-invalid={errors.title ? 'true' : undefined}
+                  aria-describedby={errors.title ? 'publication-title-error' : undefined}
+                  autoComplete="off"
+                />
+                {errors.title && (
+                  <small id="publication-title-error" className={styles.error}>
+                    {errors.title}
+                  </small>
+                )}
+              </label>
+
+              <label className={styles.field}>
+                <span>Тип помещения</span>
+                <select
+                  id={FIELD_IDS.spaceType}
+                  value={form.spaceType}
+                  onChange={(event) =>
+                    updateField('spaceType', event.target.value as KnownSpaceType)
+                  }
+                  aria-invalid={errors.spaceType ? 'true' : undefined}
+                  aria-describedby={
+                    errors.spaceType ? 'publication-space-type-error' : undefined
+                  }
+                >
+                  {SPACE_TYPE_OPTIONS.map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                {errors.spaceType && (
+                  <small id="publication-space-type-error" className={styles.error}>
+                    {errors.spaceType}
+                  </small>
+                )}
+              </label>
+
+              <label className={styles.field}>
+                <span>Город</span>
+                <input
+                  id={FIELD_IDS.city}
+                  type="text"
+                  list="publication-city-suggestions"
+                  value={form.city}
+                  onChange={(event) => updateField('city', event.target.value)}
+                  aria-invalid={errors.city ? 'true' : undefined}
+                  aria-describedby={errors.city ? 'publication-city-error' : undefined}
+                  autoComplete="address-level2"
+                />
+                <datalist id="publication-city-suggestions">
+                  {cityOptions.map((city) => (
+                    <option key={city} value={city} />
+                  ))}
+                </datalist>
+                {errors.city && (
+                  <small id="publication-city-error" className={styles.error}>
+                    {errors.city}
+                  </small>
+                )}
+              </label>
+
+              <label className={styles.field}>
+                <span>Адрес</span>
+                <input
+                  id={FIELD_IDS.address}
+                  type="text"
+                  value={form.address}
+                  onChange={(event) => updateField('address', event.target.value)}
+                  aria-invalid={errors.address ? 'true' : undefined}
+                  aria-describedby={
+                    errors.address ? 'publication-address-error' : undefined
+                  }
+                  autoComplete="street-address"
+                />
+                {errors.address && (
+                  <small id="publication-address-error" className={styles.error}>
+                    {errors.address}
+                  </small>
+                )}
+              </label>
+
+              <label className={styles.field}>
+                <span>Вместимость</span>
+                <input
+                  id={FIELD_IDS.capacity}
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={form.capacity}
+                  onChange={(event) => updateField('capacity', event.target.value)}
+                  aria-invalid={errors.capacity ? 'true' : undefined}
+                  aria-describedby={
+                    errors.capacity ? 'publication-capacity-error' : undefined
+                  }
+                  inputMode="numeric"
+                />
+                <small className={styles.helperPlaceholder} aria-hidden="true">
+                  &nbsp;
+                </small>
+                {errors.capacity && (
+                  <small id="publication-capacity-error" className={styles.error}>
+                    {errors.capacity}
+                  </small>
+                )}
+              </label>
+
+              <label className={styles.field}>
+                <span>Цена за час</span>
+                <input
+                  id={FIELD_IDS.pricePerHour}
+                  type="number"
+                  min="100"
+                  step="100"
+                  value={form.pricePerHour}
+                  onChange={(event) => updateField('pricePerHour', event.target.value)}
+                  aria-invalid={errors.pricePerHour ? 'true' : undefined}
+                  aria-describedby={
+                    errors.pricePerHour ? 'publication-price-error' : undefined
+                  }
+                  inputMode="numeric"
+                />
+                <small className={styles.helper}>{pricePreview}</small>
+                {errors.pricePerHour && (
+                  <small id="publication-price-error" className={styles.error}>
+                    {errors.pricePerHour}
+                  </small>
+                )}
+              </label>
+            </div>
+          </article>
+
+          <article className={styles.editorSection}>
+            <div className={styles.sectionHeader}>
+              <h2>Описание</h2>
+              <p>Текст карточки и дополнительные детали, которые увидит арендатор.</p>
+            </div>
+
+            <label className={styles.field}>
+              <span>Описание</span>
+              <textarea
+                id={FIELD_IDS.description}
+                value={form.description}
+                onChange={(event) => updateField('description', event.target.value)}
+                aria-invalid={errors.description ? 'true' : undefined}
+                aria-describedby={
+                  errors.description ? 'publication-description-error' : undefined
+                }
+                rows={6}
+              />
+              {errors.description && (
+                <small id="publication-description-error" className={styles.error}>
+                  {errors.description}
+                </small>
+              )}
+            </label>
+          </article>
+
+          <article className={styles.editorSection}>
+            <div className={styles.sectionHeader}>
+              <h2>Удобства</h2>
+              <p>
+                Выбранные теги автоматически попадут в описание и будут видны в живом превью.
+              </p>
+            </div>
+
+            <div className={styles.amenityGroups}>
+              {AMENITY_GROUPS.map((group) => (
+                <fieldset key={group.title} className={styles.amenityGroup}>
+                  <legend>{group.title}</legend>
+                  <div className={styles.chips}>
+                    {group.options.map((amenity) => {
+                      const selected = selectedAmenities.includes(amenity)
+
+                      return (
+                        <button
+                          key={amenity}
+                          type="button"
+                          className={`${styles.chip} ${selected ? styles.chipSelected : ''}`}
+                          onClick={() => toggleAmenity(amenity)}
+                          aria-pressed={selected}
+                        >
+                          {amenity}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </fieldset>
               ))}
-            </select>
-            {errors.spaceType && (
-              <small id="publication-space-type-error" className={styles.error}>
-                {errors.spaceType}
-              </small>
-            )}
-          </label>
+            </div>
+          </article>
 
-          <label className={styles.field}>
-            <span>Город</span>
-            <input
-              id={FIELD_IDS.city}
-              type="text"
-              list="publication-city-suggestions"
-              value={form.city}
-              onChange={(event) => updateField('city', event.target.value)}
-              aria-invalid={errors.city ? 'true' : undefined}
-              aria-describedby={errors.city ? 'publication-city-error' : undefined}
-              autoComplete="address-level2"
-            />
-            <datalist id="publication-city-suggestions">
-              {cityOptions.map((city) => (
-                <option key={city} value={city} />
-              ))}
-            </datalist>
-            {errors.city && (
-              <small id="publication-city-error" className={styles.error}>
-                {errors.city}
-              </small>
-            )}
-          </label>
+          <article className={styles.editorSection}>
+            <div className={styles.sectionHeader}>
+              <h2>Медиа</h2>
+              <p>Укажите ссылку на изображение, если оно уже загружено во внешнее хранилище.</p>
+            </div>
 
-          <label className={styles.field}>
-            <span>Адрес</span>
-            <input
-              id={FIELD_IDS.address}
-              type="text"
-              value={form.address}
-              onChange={(event) => updateField('address', event.target.value)}
-              aria-invalid={errors.address ? 'true' : undefined}
-              aria-describedby={
-                errors.address ? 'publication-address-error' : undefined
-              }
-              autoComplete="street-address"
-            />
-            {errors.address && (
-              <small id="publication-address-error" className={styles.error}>
-                {errors.address}
-              </small>
-            )}
-          </label>
+            <label className={styles.field}>
+              <span>Ссылка на изображение</span>
+              <input
+                id={FIELD_IDS.imageUrl}
+                type="url"
+                value={form.imageUrl}
+                onChange={(event) => updateField('imageUrl', event.target.value)}
+                aria-invalid={errors.imageUrl ? 'true' : undefined}
+                aria-describedby={
+                  errors.imageUrl ? 'publication-image-url-error' : undefined
+                }
+                placeholder="https://example.com/image.jpg"
+              />
+              {errors.imageUrl && (
+                <small id="publication-image-url-error" className={styles.error}>
+                  {errors.imageUrl}
+                </small>
+              )}
+            </label>
+          </article>
+        </section>
 
-          <label className={styles.field}>
-            <span>Вместимость</span>
-            <input
-              id={FIELD_IDS.capacity}
-              type="number"
-              min="1"
-              step="1"
-              value={form.capacity}
-              onChange={(event) => updateField('capacity', event.target.value)}
-              aria-invalid={errors.capacity ? 'true' : undefined}
-              aria-describedby={
-                errors.capacity ? 'publication-capacity-error' : undefined
-              }
-              inputMode="numeric"
-            />
-            {errors.capacity && (
-              <small id="publication-capacity-error" className={styles.error}>
-                {errors.capacity}
-              </small>
-            )}
-          </label>
+        <aside className={styles.previewColumn}>
+          <div className={styles.previewFrame}>
+            <div className={styles.previewImage}>
+              {canPreviewImage ? (
+                <img src={imageUrl} alt={form.title || 'Изображение помещения'} />
+              ) : (
+                <div className={styles.imagePlaceholder}>Изображение не добавлено</div>
+              )}
+            </div>
 
-          <label className={styles.field}>
-            <span>Цена за час</span>
-            <input
-              id={FIELD_IDS.pricePerHour}
-              type="number"
-              min="100"
-              step="100"
-              value={form.pricePerHour}
-              onChange={(event) => updateField('pricePerHour', event.target.value)}
-              aria-invalid={errors.pricePerHour ? 'true' : undefined}
-              aria-describedby={
-                errors.pricePerHour ? 'publication-price-error' : undefined
-              }
-              inputMode="numeric"
-            />
-            <small className={styles.helper}>{pricePreview}</small>
-            {errors.pricePerHour && (
-              <small id="publication-price-error" className={styles.error}>
-                {errors.pricePerHour}
-              </small>
-            )}
-          </label>
-        </div>
+            <div className={styles.previewBody}>
+              <div className={styles.previewTopline}>
+                <span className={styles.previewBadge}>Превью</span>
+                <span className={styles.previewBadgeMuted}>Будет опубликовано сразу</span>
+              </div>
 
-        <label className={styles.field}>
-          <span>Описание</span>
-          <textarea
-            id={FIELD_IDS.description}
-            value={form.description}
-            onChange={(event) => updateField('description', event.target.value)}
-            aria-invalid={errors.description ? 'true' : undefined}
-            aria-describedby={
-              errors.description ? 'publication-description-error' : undefined
-            }
-            rows={5}
-          />
-          {errors.description && (
-            <small id="publication-description-error" className={styles.error}>
-              {errors.description}
-            </small>
-          )}
-        </label>
+              <h2 className={styles.previewTitle}>
+                {form.title.trim() || 'Название помещения появится здесь'}
+              </h2>
 
-        <section className={styles.amenities}>
-          <div>
-            <h2>Удобства</h2>
-            <p>{selectedAmenities.length ? selectedAmenities.join(', ') : 'Не выбраны'}</p>
-          </div>
+              <p className={styles.previewMeta}>
+                {form.city.trim() || 'Город'} • {form.address.trim() || 'Адрес'}
+              </p>
 
-          <div className={styles.amenityGroups}>
-            {AMENITY_GROUPS.map((group) => (
-              <fieldset key={group.title} className={styles.amenityGroup}>
-                <legend>{group.title}</legend>
-                <div className={styles.chips}>
-                  {group.options.map((amenity) => {
-                    const selected = selectedAmenities.includes(amenity)
+              <div className={styles.previewPrice}>{pricePreview}</div>
 
-                    return (
-                      <button
-                        key={amenity}
-                        type="button"
-                        className={`${styles.chip} ${selected ? styles.chipSelected : ''}`}
-                        onClick={() => toggleAmenity(amenity)}
-                        aria-pressed={selected}
-                      >
-                        {amenity}
-                      </button>
-                    )
-                  })}
+              <dl className={styles.previewFacts}>
+                <div>
+                  <dt>Владелец</dt>
+                  <dd>{profile.legalName}</dd>
                 </div>
-              </fieldset>
-            ))}
+                <div>
+                  <dt>Тип</dt>
+                  <dd>{getSpaceTypeLabel(form.spaceType)}</dd>
+                </div>
+                <div>
+                  <dt>Вместимость</dt>
+                  <dd>{form.capacity.trim() ? `до ${form.capacity.trim()} человек` : 'Не указана'}</dd>
+                </div>
+                <div>
+                  <dt>Статус</dt>
+                  <dd>Новое объявление</dd>
+                </div>
+              </dl>
+
+              <section className={styles.previewSection}>
+                <h3>Описание</h3>
+                <p className={styles.previewDescription}>
+                  {previewDescription || 'Описание и удобства появятся здесь после заполнения.'}
+                </p>
+              </section>
+
+              <section className={styles.previewSection}>
+                <h3>Удобства</h3>
+                <div className={styles.previewChips}>
+                  {selectedAmenities.length > 0 ? (
+                    selectedAmenities.map((amenity) => (
+                      <span key={amenity} className={styles.previewChip}>
+                        {amenity}
+                      </span>
+                    ))
+                  ) : (
+                    <span className={styles.previewHint}>Теги пока не выбраны</span>
+                  )}
+                </div>
+              </section>
+
+              {errors.form && (
+                <p className={styles.error} role="alert">
+                  {errors.form}
+                </p>
+              )}
+
+              {createdListing && (
+                <div className={styles.success} role="status">
+                  <p>Объявление опубликовано.</p>
+                  <p>Владелец: {createdListing.ownerOrganizationName || profile.legalName}</p>
+                  <Link to={`/spaces/${createdListing.id}`}>Открыть объявление</Link>
+                </div>
+              )}
+
+              <div className={styles.previewActions}>
+                <button type="submit" className={styles.submitButton} disabled={submitting}>
+                  {submitting ? 'Публикуем...' : 'Опубликовать'}
+                </button>
+              </div>
+            </div>
           </div>
-        </section>
-
-        <label className={styles.field}>
-          <span>Ссылка на изображение</span>
-          <input
-            id={FIELD_IDS.imageUrl}
-            type="url"
-            value={form.imageUrl}
-            onChange={(event) => updateField('imageUrl', event.target.value)}
-            aria-invalid={errors.imageUrl ? 'true' : undefined}
-            aria-describedby={
-              errors.imageUrl ? 'publication-image-url-error' : undefined
-            }
-            placeholder="https://example.com/image.jpg"
-          />
-          {errors.imageUrl && (
-            <small id="publication-image-url-error" className={styles.error}>
-              {errors.imageUrl}
-            </small>
-          )}
-        </label>
-
-        <div className={styles.imagePreview}>
-          {canPreviewImage ? (
-            <img src={imageUrl} alt={form.title || 'Изображение помещения'} />
-          ) : (
-            <div className={styles.imagePlaceholder}>
-              Изображение не добавлено
-            </div>
-          )}
-        </div>
-
-        <section className={styles.summary}>
-          <h2>Сводка</h2>
-          <dl>
-            <div>
-              <dt>Тип</dt>
-              <dd>{getSpaceTypeLabel(form.spaceType)}</dd>
-            </div>
-            <div>
-              <dt>Город</dt>
-              <dd>{form.city.trim() || 'Не указан'}</dd>
-            </div>
-            <div>
-              <dt>Вместимость</dt>
-              <dd>{form.capacity.trim() || 'Не указана'}</dd>
-            </div>
-            <div>
-              <dt>Цена</dt>
-              <dd>{pricePreview}</dd>
-            </div>
-            <div>
-              <dt>Удобства</dt>
-              <dd>{selectedAmenities.length || 'Не выбраны'}</dd>
-            </div>
-          </dl>
-        </section>
-
-        {errors.form && (
-          <p className={styles.error} role="alert">
-            {errors.form}
-          </p>
-        )}
-
-        {createdListing && (
-          <div className={styles.success} role="status">
-            <p>Объявление опубликовано.</p>
-            <Link to={`/spaces/${createdListing.id}`}>
-              Открыть объявление
-            </Link>
-          </div>
-        )}
-
-        <div className={styles.actions}>
-          <button type="submit" className={styles.submitButton} disabled={submitting}>
-            {submitting ? 'Публикуем...' : 'Опубликовать'}
-          </button>
-        </div>
+        </aside>
       </form>
     </main>
   )

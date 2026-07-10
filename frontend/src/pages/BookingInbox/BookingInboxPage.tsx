@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 import { getBookingInbox, parseBookingApiError } from '../../api/bookings'
@@ -7,7 +7,9 @@ import type { BookingInboxItem } from '../../types/booking'
 import styles from './BookingInboxPage.module.css'
 
 type InboxState = 'loading' | 'loaded' | 'empty' | 'error'
-type InboxView = 'all' | 'action-required' | 'active' | 'terminal'
+type InboxView = 'all' | 'action-required' | 'confirmed' | 'active' | 'completed'
+
+const POLL_INTERVAL_MS = 30000
 
 const DATE_TIME_FORMAT = new Intl.DateTimeFormat('ru-RU', {
   dateStyle: 'medium',
@@ -41,15 +43,6 @@ function getCounterpartyLabel(item: BookingInboxItem, role?: string) {
   return item.landlordOrganizationName
 }
 
-function isTerminalStatus(status: BookingInboxItem['status']) {
-  return (
-    status === 'COMPLETED' ||
-    status === 'REJECTED' ||
-    status === 'CANCELLED' ||
-    status === 'EXPIRED'
-  )
-}
-
 function isActionRequired(item: BookingInboxItem, role?: string) {
   if (role === 'LANDLORD') {
     return item.status === 'REQUESTED'
@@ -62,11 +55,21 @@ function isActionRequired(item: BookingInboxItem, role?: string) {
   return false
 }
 
-function getViewLabel(view: InboxView) {
-  if (view === 'action-required') return 'Требуют действия'
-  if (view === 'active') return 'Активные'
-  if (view === 'terminal') return 'Завершенные'
-  return 'Все'
+function isConfirmedStatus(status: BookingInboxItem['status']) {
+  return status === 'CONFIRMED'
+}
+
+function isActiveStatus(status: BookingInboxItem['status']) {
+  return status === 'IN_PROGRESS'
+}
+
+function isCompletedStatus(status: BookingInboxItem['status']) {
+  return (
+    status === 'COMPLETED' ||
+    status === 'REJECTED' ||
+    status === 'CANCELLED' ||
+    status === 'EXPIRED'
+  )
 }
 
 export function BookingInboxPage() {
@@ -76,42 +79,156 @@ export function BookingInboxPage() {
   const [state, setState] = useState<InboxState>('loading')
   const [message, setMessage] = useState('')
   const [refreshing, setRefreshing] = useState(false)
+  const [requestPending, setRequestPending] = useState(false)
   const [view, setView] = useState<InboxView>('all')
+  const pollTimeoutRef = useRef<number | null>(null)
+  const requestInFlightRef = useRef(false)
+  const mountedRef = useRef(false)
 
-  const visibleItems = items.filter((item) => {
-    if (view === 'action-required') {
-      return isActionRequired(item, profile?.role)
+  const visibleItems = useMemo(() => {
+    return items.filter((item) => {
+      if (view === 'action-required') {
+        return isActionRequired(item, profile?.role)
+      }
+
+      if (view === 'confirmed') {
+        return isConfirmedStatus(item.status)
+      }
+
+      if (view === 'active') {
+        return isActiveStatus(item.status)
+      }
+
+      if (view === 'completed') {
+        return isCompletedStatus(item.status)
+      }
+
+      return true
+    })
+  }, [items, profile?.role, view])
+
+  function clearPolling() {
+    if (pollTimeoutRef.current !== null) {
+      window.clearTimeout(pollTimeoutRef.current)
+      pollTimeoutRef.current = null
+    }
+  }
+
+  function schedulePolling() {
+    clearPolling()
+    pollTimeoutRef.current = window.setTimeout(() => {
+      void pollInbox()
+    }, POLL_INTERVAL_MS)
+  }
+
+  async function pollInbox() {
+    if (requestInFlightRef.current) {
+      return
     }
 
-    if (view === 'active') {
-      return !isTerminalStatus(item.status)
+    requestInFlightRef.current = true
+    setRequestPending(true)
+
+    try {
+      const inbox = await getBookingInbox()
+
+      if (!mountedRef.current) {
+        return
+      }
+
+      setItems(inbox)
+      setState(inbox.length === 0 ? 'empty' : 'loaded')
+      setMessage('')
+    } catch (error) {
+      if (!mountedRef.current) {
+        return
+      }
+
+      const parsedError = parseBookingApiError(error)
+      setMessage(parsedError.message || 'Не удалось обновить список заявок.')
+    } finally {
+      requestInFlightRef.current = false
+
+      if (mountedRef.current) {
+        setRequestPending(false)
+        schedulePolling()
+      }
+    }
+  }
+
+  async function handleRefresh() {
+    if (requestInFlightRef.current) {
+      return
     }
 
-    if (view === 'terminal') {
-      return isTerminalStatus(item.status)
+    requestInFlightRef.current = true
+    setRefreshing(true)
+    setRequestPending(true)
+
+    try {
+      const inbox = await getBookingInbox()
+
+      if (!mountedRef.current) {
+        return
+      }
+
+      setItems(inbox)
+      setState(inbox.length === 0 ? 'empty' : 'loaded')
+      setMessage('')
+    } catch (error) {
+      if (!mountedRef.current) {
+        return
+      }
+
+      const parsedError = parseBookingApiError(error)
+      setMessage(parsedError.message || 'Не удалось обновить список заявок.')
+    } finally {
+      requestInFlightRef.current = false
+
+      if (mountedRef.current) {
+        setRefreshing(false)
+        setRequestPending(false)
+        schedulePolling()
+      }
     }
+  }
 
-    return true
-  })
+  useEffect(() => {
+    mountedRef.current = true
 
+    return () => {
+      mountedRef.current = false
+      clearPolling()
+    }
+  }, [])
+
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     let cancelled = false
 
-    async function loadInbox() {
+    async function loadInitialInbox() {
+      clearPolling()
+
+      if (requestInFlightRef.current) {
+        return
+      }
+
+      requestInFlightRef.current = true
+      setRequestPending(true)
       setState('loading')
       setMessage('')
 
       try {
         const inbox = await getBookingInbox()
 
-        if (cancelled) {
+        if (cancelled || !mountedRef.current) {
           return
         }
 
         setItems(inbox)
         setState(inbox.length === 0 ? 'empty' : 'loaded')
       } catch (error) {
-        if (cancelled) {
+        if (cancelled || !mountedRef.current) {
           return
         }
 
@@ -120,35 +237,94 @@ export function BookingInboxPage() {
         setState('error')
         setMessage(parsedError.message || 'Не удалось загрузить список заявок.')
       } finally {
-        if (!cancelled) {
+        requestInFlightRef.current = false
+
+        if (!cancelled && mountedRef.current) {
+          setRequestPending(false)
           setRefreshing(false)
+          clearPolling()
+          pollTimeoutRef.current = window.setTimeout(() => {
+            if (requestInFlightRef.current) {
+              return
+            }
+
+            requestInFlightRef.current = true
+            setRequestPending(true)
+
+            void getBookingInbox()
+              .then((inbox) => {
+                if (!mountedRef.current) {
+                  return
+                }
+
+                setItems(inbox)
+                setState(inbox.length === 0 ? 'empty' : 'loaded')
+                setMessage('')
+              })
+              .catch((pollError: unknown) => {
+                if (!mountedRef.current) {
+                  return
+                }
+
+                const parsedError = parseBookingApiError(pollError)
+                setMessage(parsedError.message || 'Не удалось обновить список заявок.')
+              })
+              .finally(() => {
+                requestInFlightRef.current = false
+
+                if (mountedRef.current) {
+                  setRequestPending(false)
+                  clearPolling()
+                  pollTimeoutRef.current = window.setTimeout(() => {
+                    if (requestInFlightRef.current) {
+                      return
+                    }
+
+                    requestInFlightRef.current = true
+                    setRequestPending(true)
+
+                    void getBookingInbox()
+                      .then((nextInbox) => {
+                        if (!mountedRef.current) {
+                          return
+                        }
+
+                        setItems(nextInbox)
+                        setState(nextInbox.length === 0 ? 'empty' : 'loaded')
+                        setMessage('')
+                      })
+                      .catch((nextPollError: unknown) => {
+                        if (!mountedRef.current) {
+                          return
+                        }
+
+                        const parsedError = parseBookingApiError(nextPollError)
+                        setMessage(parsedError.message || 'Не удалось обновить список заявок.')
+                      })
+                      .finally(() => {
+                        requestInFlightRef.current = false
+
+                        if (mountedRef.current) {
+                          setRequestPending(false)
+                          schedulePolling()
+                        }
+                      })
+                  }, POLL_INTERVAL_MS)
+                }
+              })
+          }, POLL_INTERVAL_MS)
         }
       }
     }
 
-    loadInbox()
+    void loadInitialInbox()
 
     return () => {
       cancelled = true
+      clearPolling()
     }
   }, [location.key])
-
-  async function handleRefresh() {
-    setRefreshing(true)
-
-    try {
-      const inbox = await getBookingInbox()
-      setItems(inbox)
-      setState(inbox.length === 0 ? 'empty' : 'loaded')
-      setMessage('')
-    } catch (error) {
-      const parsedError = parseBookingApiError(error)
-      setState('error')
-      setMessage(parsedError.message || 'Не удалось обновить список заявок.')
-    } finally {
-      setRefreshing(false)
-    }
-  }
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   const title =
     profile?.role === 'LANDLORD'
@@ -158,8 +334,9 @@ export function BookingInboxPage() {
         : 'Заявки на бронирование'
 
   const actionRequiredCount = items.filter((item) => isActionRequired(item, profile?.role)).length
-  const activeCount = items.filter((item) => !isTerminalStatus(item.status)).length
-  const terminalCount = items.length - activeCount
+  const confirmedCount = items.filter((item) => isConfirmedStatus(item.status)).length
+  const activeCount = items.filter((item) => isActiveStatus(item.status)).length
+  const completedCount = items.filter((item) => isCompletedStatus(item.status)).length
 
   return (
     <main className={styles.page}>
@@ -171,8 +348,8 @@ export function BookingInboxPage() {
         <div>
           <h1 className={styles.title}>{title}</h1>
           <p className={styles.subtitle}>
-            Список заявок, которые доступны текущему аккаунту. Открывайте заявку,
-            чтобы увидеть статус и историю.
+            Список заявок, которые доступны текущему аккаунту. Статусы обновляются автоматически,
+            а по клику можно открыть полную карточку заявки.
           </p>
         </div>
 
@@ -180,19 +357,19 @@ export function BookingInboxPage() {
           <div className={styles.segmentedControl} role="tablist" aria-label="Фильтр заявок">
             <button
               type="button"
-              className={`${styles.segmentButton} ${view === 'all' ? styles.segmentButtonActive : ''}`}
-              onClick={() => setView('all')}
-              aria-pressed={view === 'all'}
-            >
-              Все
-            </button>
-            <button
-              type="button"
               className={`${styles.segmentButton} ${view === 'action-required' ? styles.segmentButtonActive : ''}`}
               onClick={() => setView('action-required')}
               aria-pressed={view === 'action-required'}
             >
               Требуют действия
+            </button>
+            <button
+              type="button"
+              className={`${styles.segmentButton} ${view === 'confirmed' ? styles.segmentButtonActive : ''}`}
+              onClick={() => setView('confirmed')}
+              aria-pressed={view === 'confirmed'}
+            >
+              Подтвержденные
             </button>
             <button
               type="button"
@@ -204,19 +381,27 @@ export function BookingInboxPage() {
             </button>
             <button
               type="button"
-              className={`${styles.segmentButton} ${view === 'terminal' ? styles.segmentButtonActive : ''}`}
-              onClick={() => setView('terminal')}
-              aria-pressed={view === 'terminal'}
+              className={`${styles.segmentButton} ${view === 'completed' ? styles.segmentButtonActive : ''}`}
+              onClick={() => setView('completed')}
+              aria-pressed={view === 'completed'}
             >
               Завершенные
+            </button>
+            <button
+              type="button"
+              className={`${styles.segmentButton} ${view === 'all' ? styles.segmentButtonActive : ''}`}
+              onClick={() => setView('all')}
+              aria-pressed={view === 'all'}
+            >
+              Все
             </button>
           </div>
 
           <button
             type="button"
             className={styles.refreshButton}
-            onClick={handleRefresh}
-            disabled={state === 'loading' || refreshing}
+            onClick={() => void handleRefresh()}
+            disabled={requestPending}
           >
             {refreshing ? 'Обновление...' : 'Обновить'}
           </button>
@@ -232,8 +417,8 @@ export function BookingInboxPage() {
           <button
             type="button"
             className={styles.retryButton}
-            onClick={handleRefresh}
-            disabled={refreshing}
+            onClick={() => void handleRefresh()}
+            disabled={requestPending}
           >
             Повторить
           </button>
@@ -244,8 +429,7 @@ export function BookingInboxPage() {
         <div className={styles.stateBox}>
           <h2 className={styles.stateTitle}>Заявок пока нет</h2>
           <p className={styles.stateText}>
-            Здесь появятся ваши заявки на бронирование, когда они будут созданы или
-            получены.
+            Здесь появятся ваши заявки на бронирование, когда они будут созданы или получены.
           </p>
         </div>
       )}
@@ -253,12 +437,14 @@ export function BookingInboxPage() {
       {state === 'loaded' && (
         <section className={styles.list} aria-label="Список заявок">
           <div className={styles.summary}>
-            <span>Все: {items.length}</span>
+            <span>Всего: {items.length}</span>
             <span>Требуют действия: {actionRequiredCount}</span>
+            <span>Подтвержденные: {confirmedCount}</span>
             <span>Активные: {activeCount}</span>
-            <span>Завершенные: {terminalCount}</span>
-            <span>Показывается: {getViewLabel(view)}</span>
+            <span>Завершенные: {completedCount}</span>
           </div>
+
+          {message && <div className={`${styles.stateBox} ${styles.warning}`}>{message}</div>}
 
           {visibleItems.map((item) => (
             <article key={item.id} className={styles.card}>
@@ -317,7 +503,7 @@ export function BookingInboxPage() {
         <div className={styles.stateBox}>
           <h2 className={styles.stateTitle}>В этом разделе пока нет заявок</h2>
           <p className={styles.stateText}>
-            Попробуйте переключить фильтр или обновить список, если статус заявок изменился.
+            Переключите вкладку или дождитесь обновления, если статус заявок изменился.
           </p>
         </div>
       )}

@@ -28,9 +28,21 @@ export function Header() {
         {isAuthenticated ? (
           <>
             {profile?.role === 'LANDLORD' && (
-              <NavLink to="/spaces/new" className={({ isActive }) => getLinkClass(isActive)}>
-                Опубликовать
-              </NavLink>
+              <>
+                <NavLink
+                  to="/spaces/new"
+                  className={({ isActive }) => getLinkClass(isActive)}
+                >
+                  Опубликовать
+                </NavLink>
+
+                <NavLink
+                  to="/my-listings"
+                  className={({ isActive }) => getLinkClass(isActive)}
+                >
+                  Мои объявления
+                </NavLink>
+              </>
             )}
 
             <NavLink to="/bookings" className={({ isActive }) => getLinkClass(isActive)}>
