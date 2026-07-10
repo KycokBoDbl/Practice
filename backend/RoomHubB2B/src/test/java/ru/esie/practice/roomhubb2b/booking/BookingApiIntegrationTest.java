@@ -174,9 +174,29 @@ class BookingApiIntegrationTest {
     }
 
     @Test
+    void returnsConflictProblemForDuplicateBookingApplication() throws Exception {
+        createBooking("2035-01-03T10:00", "2035-01-03T11:00");
+
+        mockMvc.perform(post("/api/bookings")
+                        .header("Authorization", "Bearer " + tenantToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson(tenant.getId(), "2035-01-03T12:00", "2035-01-03T13:00")))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.detail")
+                        .value("Tenant already has a booking request for this listing on this date"));
+
+        mockMvc.perform(get("/api/bookings")
+                        .header("Authorization", "Bearer " + tenantToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+    }
+
+    @Test
     void exposesParticipantInboxWithVisibilityFilteringAndStableShape() throws Exception {
-        long requestedBookingId = createBooking();
-        long confirmedBookingId = createBooking();
+        long requestedBookingId = createBooking("2035-01-01T10:00", "2035-01-01T13:00");
+        long confirmedBookingId = createBooking("2035-01-02T10:00", "2035-01-02T13:00");
 
         mockMvc.perform(post("/api/bookings/{id}/approve", confirmedBookingId)
                         .header("Authorization", "Bearer " + landlordToken))
@@ -193,8 +213,8 @@ class BookingApiIntegrationTest {
                 .andExpect(jsonPath("$[0].listingId").value(listingId))
                 .andExpect(jsonPath("$[0].listingTitle").isNotEmpty())
                 .andExpect(jsonPath("$[0].status").value("CONFIRMED"))
-                .andExpect(jsonPath("$[0].startAt").value("2035-01-01T10:00"))
-                .andExpect(jsonPath("$[0].endAt").value("2035-01-01T13:00"))
+                .andExpect(jsonPath("$[0].startAt").value("2035-01-02T10:00"))
+                .andExpect(jsonPath("$[0].endAt").value("2035-01-02T13:00"))
                 .andExpect(jsonPath("$[0].pricePerHour").isNumber())
                 .andExpect(jsonPath("$[0].totalPrice").isNumber())
                 .andExpect(jsonPath("$[0].tenantOrganizationName").value(tenant.getLegalName()))
@@ -233,24 +253,32 @@ class BookingApiIntegrationTest {
     }
 
     private long createBooking() throws Exception {
+        return createBooking("2035-01-01T10:00", "2035-01-01T13:00");
+    }
+
+    private long createBooking(String startAt, String endAt) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/bookings")
                         .header("Authorization", "Bearer " + tenantToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestJson(tenant.getId())))
+                        .content(requestJson(tenant.getId(), startAt, endAt)))
                 .andExpect(status().isCreated())
                 .andReturn();
         return objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asLong();
     }
 
     private String requestJson(Long suppliedTenantId) {
+        return requestJson(suppliedTenantId, "2035-01-01T10:00", "2035-01-01T13:00");
+    }
+
+    private String requestJson(Long suppliedTenantId, String startAt, String endAt) {
         return """
                 {
                   "listingId": %d,
-                  "startAt": "2035-01-01T10:00",
-                  "endAt": "2035-01-01T13:00",
+                  "startAt": "%s",
+                  "endAt": "%s",
                   "tenantOrganizationId": %d
                 }
-                """.formatted(listingId, suppliedTenantId);
+                """.formatted(listingId, startAt, endAt, suppliedTenantId);
     }
 
     private OrganizationEntity organization(String label) {

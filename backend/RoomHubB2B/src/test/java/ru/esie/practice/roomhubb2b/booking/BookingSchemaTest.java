@@ -60,6 +60,33 @@ class BookingSchemaTest {
     }
 
     @Test
+    void rejectsDuplicateTenantListingStartDate() {
+        long tenantId = organization("7900000102");
+        long listingId = listingId();
+        jdbcTemplate.update(
+                bookingInsertSql(),
+                listingId,
+                tenantId,
+                "REQUESTED",
+                LocalDateTime.of(2030, 1, 2, 10, 0),
+                LocalDateTime.of(2030, 1, 2, 11, 0),
+                100,
+                100
+        );
+
+        assertThrows(DataIntegrityViolationException.class, () -> jdbcTemplate.update(
+                bookingInsertSql(),
+                listingId,
+                tenantId,
+                "REQUESTED",
+                LocalDateTime.of(2030, 1, 2, 12, 0),
+                LocalDateTime.of(2030, 1, 2, 13, 0),
+                100,
+                100
+        ));
+    }
+
+    @Test
     void enforcesCalendarSourceAndBookingReferenceConsistency() {
         long listingId = listingId();
         assertThrows(DataIntegrityViolationException.class, () -> jdbcTemplate.update(

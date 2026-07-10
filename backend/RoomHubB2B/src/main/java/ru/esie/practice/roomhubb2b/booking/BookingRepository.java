@@ -60,6 +60,13 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
             @Param("landlordOrganizationId") Long landlordOrganizationId
     );
 
+    boolean existsByTenantOrganizationIdAndListingIdAndStartAtGreaterThanEqualAndStartAtLessThan(
+            Long tenantOrganizationId,
+            Long listingId,
+            LocalDateTime dayStart,
+            LocalDateTime nextDayStart
+    );
+
     boolean existsByListingId(Long listingId);
 
     @Query("""

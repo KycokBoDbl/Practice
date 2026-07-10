@@ -1,5 +1,7 @@
 package ru.esie.practice.roomhubb2b.booking;
 
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.esie.practice.roomhubb2b.auth.OrganizationEntity;
@@ -30,6 +32,9 @@ public class BookingService {
 
     private static final DateTimeFormatter HOUR_FORMATTER =
             DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm");
+    private static final String DUPLICATE_BOOKING_CONSTRAINT = "uk_bookings_tenant_listing_start_date";
+    private static final String DUPLICATE_BOOKING_MESSAGE =
+            "Tenant already has a booking request for this listing on this date";
 
     private final BookingRepository bookingRepository;
     private final BookingStatusHistoryRepository historyRepository;
@@ -74,18 +79,11 @@ public class BookingService {
                 .orElseThrow(() -> new BookingNotFoundException("Listing not found"));
         OrganizationEntity tenant = organizationRepository.findById(actor.organizationId())
                 .orElseThrow(() -> new BookingNotFoundException("Tenant organization not found"));
+        rejectDuplicateApplication(actor.organizationId(), listing.getId(), startAt);
 
         long hours = Duration.between(startAt, endAt).toHours();
         BigDecimal rate = listing.getPricePerHour();
-        BookingEntity booking = bookingRepository.save(new BookingEntity(
-                listing,
-                tenant,
-                startAt,
-                endAt,
-                rate,
-                rate.multiply(BigDecimal.valueOf(hours)),
-                now
-        ));
+        BookingEntity booking = saveBooking(listing, tenant, startAt, endAt, rate, hours, now);
         historyRepository.save(new BookingStatusHistoryEntity(
                 booking, null, BookingStatus.REQUESTED, "CREATE", now
         ));
@@ -296,6 +294,53 @@ public class BookingService {
         }
     }
 
+    private void rejectDuplicateApplication(Long tenantOrganizationId, Long listingId, LocalDateTime startAt) {
+        LocalDateTime dayStart = startAt.toLocalDate().atStartOfDay();
+        LocalDateTime nextDayStart = dayStart.plusDays(1);
+        if (bookingRepository.existsByTenantOrganizationIdAndListingIdAndStartAtGreaterThanEqualAndStartAtLessThan(
+                tenantOrganizationId,
+                listingId,
+                dayStart,
+                nextDayStart
+        )) {
+            throw duplicateApplication();
+        }
+    }
+
+    private BookingEntity saveBooking(
+            ListingEntity listing,
+            OrganizationEntity tenant,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            BigDecimal rate,
+            long hours,
+            LocalDateTime now
+    ) {
+        try {
+            return bookingRepository.saveAndFlush(new BookingEntity(
+                    listing,
+                    tenant,
+                    startAt,
+                    endAt,
+                    rate,
+                    rate.multiply(BigDecimal.valueOf(hours)),
+                    now
+            ));
+        } catch (DataIntegrityViolationException exception) {
+            if (isDuplicateApplicationConstraint(exception)) {
+                throw duplicateApplication();
+            }
+            throw exception;
+        }
+    }
+
+    private boolean isDuplicateApplicationConstraint(Throwable exception) {
+        ConstraintViolationException constraintViolation =
+                findCause(exception, ConstraintViolationException.class);
+        return constraintViolation != null
+                && DUPLICATE_BOOKING_CONSTRAINT.equals(constraintViolation.getConstraintName());
+    }
+
     private LocalDateTime parseHour(String value) {
         try {
             return LocalDateTime.parse(value, HOUR_FORMATTER);
@@ -316,5 +361,20 @@ public class BookingService {
         return new BookingConflictException(
                 "Cannot " + command + " booking in status " + booking.getStatus()
         );
+    }
+
+    private BookingConflictException duplicateApplication() {
+        return new BookingConflictException(DUPLICATE_BOOKING_MESSAGE);
+    }
+
+    private static <T extends Throwable> T findCause(Throwable exception, Class<T> type) {
+        Throwable current = exception;
+        while (current != null) {
+            if (type.isInstance(current)) {
+                return type.cast(current);
+            }
+            current = current.getCause();
+        }
+        return null;
     }
 }
