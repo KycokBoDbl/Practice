@@ -60,6 +60,8 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
             @Param("landlordOrganizationId") Long landlordOrganizationId
     );
 
+    boolean existsByListingId(Long listingId);
+
     @Query("""
             SELECT booking.id
             FROM BookingEntity booking

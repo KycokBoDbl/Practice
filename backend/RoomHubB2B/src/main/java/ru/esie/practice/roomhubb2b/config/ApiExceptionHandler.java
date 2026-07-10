@@ -13,7 +13,9 @@ import ru.esie.practice.roomhubb2b.auth.RegistrationConflictException;
 import ru.esie.practice.roomhubb2b.booking.BookingConflictException;
 import ru.esie.practice.roomhubb2b.booking.BookingForbiddenException;
 import ru.esie.practice.roomhubb2b.booking.BookingNotFoundException;
+import ru.esie.practice.roomhubb2b.listing.ListingConflictException;
 import ru.esie.practice.roomhubb2b.listing.ListingForbiddenException;
+import ru.esie.practice.roomhubb2b.listing.ListingNotFoundException;
 import tools.jackson.databind.exc.InvalidFormatException;
 
 import java.net.URI;
@@ -62,8 +64,18 @@ public class ApiExceptionHandler {
         return problem(HttpStatus.CONFLICT, exception.getMessage(), request);
     }
 
+    @ExceptionHandler(ListingConflictException.class)
+    ProblemDetail handleListingConflict(ListingConflictException exception, HttpServletRequest request) {
+        return problem(HttpStatus.CONFLICT, exception.getMessage(), request);
+    }
+
     @ExceptionHandler(BookingNotFoundException.class)
     ProblemDetail handleBookingNotFound(BookingNotFoundException exception, HttpServletRequest request) {
+        return problem(HttpStatus.NOT_FOUND, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(ListingNotFoundException.class)
+    ProblemDetail handleListingNotFound(ListingNotFoundException exception, HttpServletRequest request) {
         return problem(HttpStatus.NOT_FOUND, exception.getMessage(), request);
     }
 

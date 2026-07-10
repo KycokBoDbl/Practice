@@ -68,7 +68,8 @@ public class BookingService {
         LocalDateTime now = now();
         validatePeriod(startAt, endAt, now);
 
-        ListingEntity listing = listingRepository.findByIdAndStatus(request.listingId(), ListingStatus.PUBLISHED)
+        ListingEntity listing = listingRepository.findLockedById(request.listingId())
+                .filter(candidate -> candidate.getStatus() == ListingStatus.PUBLISHED)
                 .filter(candidate -> candidate.getOwnerOrganization() != null)
                 .orElseThrow(() -> new BookingNotFoundException("Listing not found"));
         OrganizationEntity tenant = organizationRepository.findById(actor.organizationId())

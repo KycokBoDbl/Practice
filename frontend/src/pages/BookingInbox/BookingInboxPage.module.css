@@ -54,8 +54,8 @@
 }
 
 .segmentedControl {
-  display: inline-grid;
-  grid-template-columns: repeat(4, auto);
+  display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   padding: 4px;
   border: 1px solid #dbeafe;
@@ -114,6 +114,11 @@
 .error {
   border-color: #fecaca;
   background: #fef2f2;
+}
+
+.warning {
+  border-color: #fde68a;
+  background: #fffbeb;
 }
 
 .list {
@@ -235,12 +240,11 @@
   }
 
   .segmentedControl {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     width: 100%;
   }
 
   .segmentButton {
-    width: 100%;
+    flex: 1 1 calc(50% - 4px);
   }
 
   .details {
