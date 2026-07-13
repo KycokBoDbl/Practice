@@ -31,6 +31,7 @@ services:
       context: ./frontend
       args:
         VITE_API_URL: http://localhost:8081
+        VITE_YANDEX_MAPS_API_KEY: ${VITE_YANDEX_MAPS_API_KEY:?VITE_YANDEX_MAPS_API_KEY must be set}
     container_name: roomhub-frontend
     ports:
       - "3000:80"
