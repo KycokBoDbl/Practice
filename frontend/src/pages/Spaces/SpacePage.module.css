@@ -97,6 +97,26 @@
   font-size: 22px;
 }
 
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #1f2937;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+
+.secondaryButton:hover {
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
 .description {
   margin: 0;
   color: #374151;
@@ -106,6 +126,103 @@
 
 .descriptionMuted {
   color: #64748b;
+}
+
+.mapUnavailable {
+  margin: 0;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.mapCard {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+}
+
+.mapCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.mapCardTitle {
+  margin: 0;
+  color: #111827;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.mapCardAddress {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.mapCardClose {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #1d4ed8;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.mapCardClose:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.mapCanvas {
+  width: 100%;
+  min-height: 360px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #dbeafe;
+}
+
+.mapCanvasHidden {
+  display: none;
+}
+
+.mapStatus {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  padding: 20px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #1e3a8a;
+  font-weight: 700;
+  text-align: center;
+}
+
+.mapError {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.mapErrorTitle {
+  margin: 0;
+  color: #1e3a8a;
+  font-weight: 800;
+}
+
+.mapErrorText {
+  margin: 0;
+  color: #334155;
+  line-height: 1.55;
 }
 
 .amenities {
@@ -191,5 +308,17 @@
 
   .title {
     font-size: 28px;
+  }
+
+  .mapCardHeader {
+    flex-direction: column;
+  }
+
+  .mapCardClose {
+    width: 100%;
+  }
+
+  .mapCanvas {
+    min-height: 300px;
   }
 }

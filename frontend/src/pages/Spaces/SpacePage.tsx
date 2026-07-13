@@ -5,6 +5,9 @@ import { BookingCalendar } from '../../components/BookingCalendar/BookingCalenda
 import { getListing } from '../../api/listings'
 import type { Listing } from '../../types/listing'
 import { getSpaceTypeLabel } from '../../types/spaceType'
+import { getListingMapAddress, hasListingCoordinates } from './listingMapHelpers'
+import { useListingMapView } from './useListingMapView'
+import { YandexListingMap } from './YandexListingMap'
 import styles from './SpacePage.module.css'
 
 const AMENITIES_PREFIXES = ['Удобства: ', 'РЈРґРѕР±СЃС‚РІР°: ']
@@ -50,6 +53,7 @@ export function SpacePage() {
   const { id } = useParams()
   const [listing, setListing] = useState<Listing | null>(null)
   const [loading, setLoading] = useState(true)
+  const { closeListingMap, isMapOpen, openListingMap, selectedListing } = useListingMapView()
 
   useEffect(() => {
     let cancelled = false
@@ -94,6 +98,8 @@ export function SpacePage() {
 
   const imageUrl = listing.imageUrl?.trim()
   const { amenities, description } = splitDescriptionAndAmenities(listing.description)
+  const canOpenMap = hasListingCoordinates(listing)
+  const listingMapAddress = getListingMapAddress(listing)
 
   return (
     <main className={styles.page}>
@@ -153,6 +159,38 @@ export function SpacePage() {
               >
                 {description || 'Описание пока не добавлено.'}
               </p>
+            </section>
+
+            <section className={styles.detailsSection}>
+              <h2>Расположение</h2>
+              <p className={styles.description}>{listingMapAddress}</p>
+
+              {canOpenMap ? (
+                <>
+                  <button
+                    type="button"
+                    className={styles.secondaryButton}
+                    onClick={() => openListingMap(listing)}
+                  >
+                    Посмотреть на карте
+                  </button>
+
+                  {isMapOpen && selectedListing && (
+                    <YandexListingMap
+                      title={selectedListing.title}
+                      city={selectedListing.city}
+                      address={selectedListing.address}
+                      latitude={selectedListing.latitude}
+                      longitude={selectedListing.longitude}
+                      onClose={closeListingMap}
+                    />
+                  )}
+                </>
+              ) : (
+                <p className={styles.mapUnavailable}>
+                  Координаты для этого адреса пока недоступны.
+                </p>
+              )}
             </section>
 
             {amenities.length > 0 && (
