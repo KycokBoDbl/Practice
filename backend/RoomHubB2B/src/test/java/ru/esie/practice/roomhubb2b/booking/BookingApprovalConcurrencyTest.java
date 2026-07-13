@@ -49,13 +49,16 @@ class BookingApprovalConcurrencyTest {
     private Long listingId;
     private BookingActor landlordActor;
     private BookingActor tenantActor;
+    private BookingActor secondTenantActor;
 
     @BeforeEach
     void setUp() {
         OrganizationEntity landlord = organization("Concurrency landlord");
         OrganizationEntity tenant = organization("Concurrency tenant");
+        OrganizationEntity secondTenant = organization("Concurrency second tenant");
         landlordActor = new BookingActor(landlord.getId(), UserRole.LANDLORD);
         tenantActor = new BookingActor(tenant.getId(), UserRole.TENANT);
+        secondTenantActor = new BookingActor(secondTenant.getId(), UserRole.TENANT);
         ListingEntity listing = listingRepository.findByStatus(ListingStatus.PUBLISHED).get(0);
         listing.assignOwner(landlord);
         listingId = listingRepository.saveAndFlush(listing).getId();
@@ -79,7 +82,7 @@ class BookingApprovalConcurrencyTest {
     @Test
     void grantsExactlyOneOverlappingInterval() throws Exception {
         bookingIds.add(service.create(tenantActor, request("2035-02-01T10:00", "2035-02-01T12:00")).id());
-        bookingIds.add(service.create(tenantActor, request("2035-02-01T11:00", "2035-02-01T13:00")).id());
+        bookingIds.add(service.create(secondTenantActor, request("2035-02-01T11:00", "2035-02-01T13:00")).id());
         CountDownLatch ready = new CountDownLatch(2);
         CountDownLatch start = new CountDownLatch(1);
 

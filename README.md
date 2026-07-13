@@ -10,6 +10,7 @@ PowerShell:
 
 ```powershell
 $env:ROOMHUB_AUTH_TOKEN_SECRET = "replace-with-at-least-32-random-bytes"
+$env:ROOMHUB_GEOCODING_YANDEX_API_KEY = "<yandex-geocoder-key>"
 docker compose up --build
 ```
 

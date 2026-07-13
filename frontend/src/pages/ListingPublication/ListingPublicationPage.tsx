@@ -9,170 +9,33 @@ import {
 } from '../../api/listings'
 import { useAuth } from '../../auth/useAuth'
 import type { Listing } from '../../types/listing'
+import { type KnownSpaceType } from '../../types/spaceType'
+import { RUSSIAN_CITY_OPTIONS } from './listingPublicationOptions'
+import { PublicationAmenityGroups } from './PublicationAmenityGroups'
+import { PublicationPreview } from './PublicationPreview'
 import {
-  getSpaceTypeLabel,
-  SPACE_TYPE_LABELS,
-  type KnownSpaceType,
-} from '../../types/spaceType'
-import {
-  AMENITY_GROUPS,
-  RUSSIAN_CITY_OPTIONS,
-} from './listingPublicationOptions'
+  buildPublicationDescription,
+  FIELD_IDS,
+  FIELD_ORDER,
+  formatPrice,
+  getUniqueSortedValues,
+  hasErrors,
+  isValidHttpUrl,
+  normalizeOptionalValue,
+  SPACE_TYPE_OPTIONS,
+  validateForm,
+  type PublicationFormErrors,
+} from './listingPublicationForm'
 import styles from './ListingPublicationPage.module.css'
-
-interface PublicationFormState {
-  title: string
-  spaceType: KnownSpaceType
-  city: string
-  address: string
-  capacity: string
-  pricePerHour: string
-  description: string
-  imageUrl: string
-}
-
-interface PublicationFormErrors {
-  title?: string
-  spaceType?: string
-  city?: string
-  address?: string
-  capacity?: string
-  pricePerHour?: string
-  description?: string
-  imageUrl?: string
-  form?: string
-}
-
-const INITIAL_FORM_STATE: PublicationFormState = {
-  title: '',
-  spaceType: 'MEETING_ROOM',
-  city: '',
-  address: '',
-  capacity: '',
-  pricePerHour: '',
-  description: '',
-  imageUrl: '',
-}
-
-const SPACE_TYPE_OPTIONS = Object.entries(SPACE_TYPE_LABELS) as Array<
-  [KnownSpaceType, string]
->
-
-const FIELD_ORDER: Array<keyof PublicationFormState> = [
-  'title',
-  'spaceType',
-  'city',
-  'address',
-  'capacity',
-  'pricePerHour',
-  'description',
-  'imageUrl',
-]
-
-const FIELD_IDS: Record<keyof PublicationFormState, string> = {
-  title: 'publication-title',
-  spaceType: 'publication-space-type',
-  city: 'publication-city',
-  address: 'publication-address',
-  capacity: 'publication-capacity',
-  pricePerHour: 'publication-price',
-  description: 'publication-description',
-  imageUrl: 'publication-image-url',
-}
-
-function normalizeOptionalValue(value: string) {
-  const trimmedValue = value.trim()
-  return trimmedValue === '' ? null : trimmedValue
-}
-
-function isValidHttpUrl(value: string) {
-  try {
-    const url = new URL(value)
-    return url.protocol === 'http:' || url.protocol === 'https:'
-  } catch {
-    return false
-  }
-}
-
-function getUniqueSortedValues(values: string[]) {
-  return Array.from(
-    new Set(values.map((value) => value.trim()).filter(Boolean)),
-  ).sort((left, right) => left.localeCompare(right, 'ru'))
-}
-
-function buildPublicationDescription(description: string, amenities: string[]) {
-  const normalizedDescription = normalizeOptionalValue(description)
-
-  if (amenities.length === 0) {
-    return normalizedDescription
-  }
-
-  const amenityLine = `Удобства: ${amenities.join(', ')}.`
-  return normalizedDescription
-    ? `${normalizedDescription}\n\n${amenityLine}`
-    : amenityLine
-}
-
-function formatPrice(value: string) {
-  const price = Number(value)
-
-  if (!Number.isFinite(price) || price <= 0) {
-    return 'Не указана'
-  }
-
-  return `${new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: 'RUB',
-    maximumFractionDigits: price % 1 === 0 ? 0 : 2,
-  }).format(price)}/час`
-}
-
-function validateForm(form: PublicationFormState): PublicationFormErrors {
-  const errors: PublicationFormErrors = {}
-  const capacity = Number(form.capacity)
-  const pricePerHour = Number(form.pricePerHour)
-
-  if (!form.title.trim()) {
-    errors.title = 'Укажите название помещения.'
-  }
-
-  if (!form.city.trim()) {
-    errors.city = 'Укажите город.'
-  }
-
-  if (!form.address.trim()) {
-    errors.address = 'Укажите адрес.'
-  }
-
-  if (!Number.isInteger(capacity) || capacity < 1) {
-    errors.capacity = 'Вместимость должна быть целым числом от 1.'
-  }
-
-  if (!Number.isFinite(pricePerHour) || pricePerHour <= 0) {
-    errors.pricePerHour = 'Цена за час должна быть положительным числом.'
-  }
-
-  const imageUrl = form.imageUrl.trim()
-
-  if (imageUrl && !isValidHttpUrl(imageUrl)) {
-    errors.imageUrl = 'Ссылка на изображение должна начинаться с http:// или https://.'
-  }
-
-  return errors
-}
-
-function hasErrors(errors: PublicationFormErrors) {
-  return Object.values(errors).some(Boolean)
-}
+import { useListingPublicationForm } from './useListingPublicationForm'
 
 export function ListingPublicationPage() {
   const { profile } = useAuth()
-  const [form, setForm] = useState<PublicationFormState>(INITIAL_FORM_STATE)
-  const [errors, setErrors] = useState<PublicationFormErrors>({})
+  const { errors, form, selectedAmenities, setErrors, toggleAmenity, updateField } =
+    useListingPublicationForm()
   const [submitting, setSubmitting] = useState(false)
   const [createdListing, setCreatedListing] = useState<Listing | null>(null)
   const [catalogCities, setCatalogCities] = useState<string[]>([])
-  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
 
   useEffect(() => {
     let cancelled = false
@@ -236,30 +99,6 @@ export function ListingPublicationPage() {
     if ('focus' in fieldElement) {
       fieldElement.focus()
     }
-  }
-
-  function updateField<Field extends keyof PublicationFormState>(
-    field: Field,
-    value: PublicationFormState[Field],
-  ) {
-    setForm((currentForm) => ({
-      ...currentForm,
-      [field]: value,
-    }))
-
-    setErrors((currentErrors) => ({
-      ...currentErrors,
-      [field]: undefined,
-      form: undefined,
-    }))
-  }
-
-  function toggleAmenity(amenity: string) {
-    setSelectedAmenities((currentAmenities) =>
-      currentAmenities.includes(amenity)
-        ? currentAmenities.filter((currentAmenity) => currentAmenity !== amenity)
-        : [...currentAmenities, amenity],
-    )
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -349,7 +188,8 @@ export function ListingPublicationPage() {
       </section>
 
       <form className={styles.layout} onSubmit={handleSubmit} noValidate>
-        <section className={styles.editorColumn}>
+        <div className={styles.formBody}>
+          <section className={styles.editorColumn}>
           <article className={styles.editorSection}>
             <div className={styles.sectionHeader}>
               <h2>Основное</h2>
@@ -529,30 +369,10 @@ export function ListingPublicationPage() {
               </p>
             </div>
 
-            <div className={styles.amenityGroups}>
-              {AMENITY_GROUPS.map((group) => (
-                <fieldset key={group.title} className={styles.amenityGroup}>
-                  <legend>{group.title}</legend>
-                  <div className={styles.chips}>
-                    {group.options.map((amenity) => {
-                      const selected = selectedAmenities.includes(amenity)
-
-                      return (
-                        <button
-                          key={amenity}
-                          type="button"
-                          className={`${styles.chip} ${selected ? styles.chipSelected : ''}`}
-                          onClick={() => toggleAmenity(amenity)}
-                          aria-pressed={selected}
-                        >
-                          {amenity}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </fieldset>
-              ))}
-            </div>
+            <PublicationAmenityGroups
+              selectedAmenities={selectedAmenities}
+              onToggleAmenity={toggleAmenity}
+            />
           </article>
 
           <article className={styles.editorSection}>
@@ -581,97 +401,27 @@ export function ListingPublicationPage() {
               )}
             </label>
           </article>
-        </section>
 
-        <aside className={styles.previewColumn}>
-          <div className={styles.previewFrame}>
-            <div className={styles.previewImage}>
-              {canPreviewImage ? (
-                <img src={imageUrl} alt={form.title || 'Изображение помещения'} />
-              ) : (
-                <div className={styles.imagePlaceholder}>Изображение не добавлено</div>
-              )}
-            </div>
+          </section>
 
-            <div className={styles.previewBody}>
-              <div className={styles.previewTopline}>
-                <span className={styles.previewBadge}>Превью</span>
-                <span className={styles.previewBadgeMuted}>Будет опубликовано сразу</span>
-              </div>
+          <PublicationPreview
+            canPreviewImage={canPreviewImage}
+            createdListing={createdListing}
+            error={errors.form}
+            form={form}
+            imageUrl={imageUrl}
+            ownerName={profile.legalName}
+            previewDescription={previewDescription}
+            pricePreview={pricePreview}
+            selectedAmenities={selectedAmenities}
+          />
+        </div>
 
-              <h2 className={styles.previewTitle}>
-                {form.title.trim() || 'Название помещения появится здесь'}
-              </h2>
-
-              <p className={styles.previewMeta}>
-                {form.city.trim() || 'Город'} • {form.address.trim() || 'Адрес'}
-              </p>
-
-              <div className={styles.previewPrice}>{pricePreview}</div>
-
-              <dl className={styles.previewFacts}>
-                <div>
-                  <dt>Владелец</dt>
-                  <dd>{profile.legalName}</dd>
-                </div>
-                <div>
-                  <dt>Тип</dt>
-                  <dd>{getSpaceTypeLabel(form.spaceType)}</dd>
-                </div>
-                <div>
-                  <dt>Вместимость</dt>
-                  <dd>{form.capacity.trim() ? `до ${form.capacity.trim()} человек` : 'Не указана'}</dd>
-                </div>
-                <div>
-                  <dt>Статус</dt>
-                  <dd>Новое объявление</dd>
-                </div>
-              </dl>
-
-              <section className={styles.previewSection}>
-                <h3>Описание</h3>
-                <p className={styles.previewDescription}>
-                  {previewDescription || 'Описание и удобства появятся здесь после заполнения.'}
-                </p>
-              </section>
-
-              <section className={styles.previewSection}>
-                <h3>Удобства</h3>
-                <div className={styles.previewChips}>
-                  {selectedAmenities.length > 0 ? (
-                    selectedAmenities.map((amenity) => (
-                      <span key={amenity} className={styles.previewChip}>
-                        {amenity}
-                      </span>
-                    ))
-                  ) : (
-                    <span className={styles.previewHint}>Теги пока не выбраны</span>
-                  )}
-                </div>
-              </section>
-
-              {errors.form && (
-                <p className={styles.error} role="alert">
-                  {errors.form}
-                </p>
-              )}
-
-              {createdListing && (
-                <div className={styles.success} role="status">
-                  <p>Объявление опубликовано.</p>
-                  <p>Владелец: {createdListing.ownerOrganizationName || profile.legalName}</p>
-                  <Link to={`/spaces/${createdListing.id}`}>Открыть объявление</Link>
-                </div>
-              )}
-
-              <div className={styles.previewActions}>
-                <button type="submit" className={styles.submitButton} disabled={submitting}>
-                  {submitting ? 'Публикуем...' : 'Опубликовать'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </aside>
+        <div className={styles.formActions}>
+          <button type="submit" className={styles.submitButton} disabled={submitting}>
+            {submitting ? 'Публикуем...' : 'Опубликовать'}
+          </button>
+        </div>
       </form>
     </main>
   )

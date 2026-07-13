@@ -55,8 +55,8 @@ export interface BookingInboxItem {
   pricePerHour: number
   totalPrice: number
   confirmationDeadline: string | null
-  tenantOrganizationName: string
-  landlordOrganizationName: string
+  tenantOrganizationName: string | null
+  landlordOrganizationName: string | null
   createdAt: string
   updatedAt: string
 }
@@ -69,4 +69,5 @@ export type BookingErrorKind =
   | 'forbidden'
   | 'notFound'
   | 'conflict'
+  | 'duplicateApplicationConflict'
   | 'unknown'

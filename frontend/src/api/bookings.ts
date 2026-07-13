@@ -23,6 +23,8 @@ const bookingTransitionPaths: Record<BookingTransitionCommand, string> = {
   confirm: 'confirm',
   cancel: 'cancel',
 }
+const DUPLICATE_BOOKING_APPLICATION_DETAIL =
+  'Tenant already has a booking request for this listing on this date'
 
 function getErrorStatus(error: unknown, parsedError: ParsedProblemDetail) {
   if (typeof parsedError.status === 'number') {
@@ -36,11 +38,17 @@ function getErrorStatus(error: unknown, parsedError: ParsedProblemDetail) {
   return undefined
 }
 
-function getBookingErrorKind(status: number | undefined): BookingErrorKind {
+function getBookingErrorKind(
+  status: number | undefined,
+  message: string,
+): BookingErrorKind {
   if (status === 400) return 'validation'
   if (status === 401) return 'unauthorized'
   if (status === 403) return 'forbidden'
   if (status === 404) return 'notFound'
+  if (status === 409 && message === DUPLICATE_BOOKING_APPLICATION_DETAIL) {
+    return 'duplicateApplicationConflict'
+  }
   if (status === 409) return 'conflict'
   return 'unknown'
 }
@@ -52,7 +60,7 @@ export function parseBookingApiError(error: unknown): ParsedBookingApiError {
   return {
     ...parsedError,
     status,
-    kind: getBookingErrorKind(status),
+    kind: getBookingErrorKind(status, parsedError.message),
   }
 }
 

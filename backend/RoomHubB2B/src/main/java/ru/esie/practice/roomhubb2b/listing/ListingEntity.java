@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import ru.esie.practice.roomhubb2b.auth.OrganizationEntity;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Table(name = "listings")
@@ -36,6 +37,12 @@ public class ListingEntity {
 
     @Column(name = "image_url")
     private String imageUrl;
+
+    @Column(precision = 9, scale = 6)
+    private BigDecimal latitude;
+
+    @Column(precision = 9, scale = 6)
+    private BigDecimal longitude;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
@@ -138,6 +145,14 @@ public class ListingEntity {
         return imageUrl;
     }
 
+    public BigDecimal getLatitude() {
+        return latitude;
+    }
+
+    public BigDecimal getLongitude() {
+        return longitude;
+    }
+
     public ListingStatus getStatus() {
         return status;
     }
@@ -170,6 +185,24 @@ public class ListingEntity {
         this.imageUrl = imageUrl;
     }
 
+    public void updateCoordinates(BigDecimal latitude, BigDecimal longitude) {
+        if ((latitude == null) != (longitude == null)) {
+            throw new IllegalArgumentException("latitude and longitude must be set together");
+        }
+        if (latitude != null && isOutsideRange(latitude, "-90", "90")) {
+            throw new IllegalArgumentException("latitude must be between -90 and 90");
+        }
+        if (longitude != null && isOutsideRange(longitude, "-180", "180")) {
+            throw new IllegalArgumentException("longitude must be between -180 and 180");
+        }
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
+
+    public boolean hasSameAddress(String city, String address) {
+        return Objects.equals(this.city, city) && Objects.equals(this.address, address);
+    }
+
     public void archive() {
         this.status = ListingStatus.ARCHIVED;
     }
@@ -180,5 +213,9 @@ public class ListingEntity {
 
     public void assignOwner(OrganizationEntity ownerOrganization) {
         this.ownerOrganization = ownerOrganization;
+    }
+
+    private static boolean isOutsideRange(BigDecimal value, String min, String max) {
+        return value.compareTo(new BigDecimal(min)) < 0 || value.compareTo(new BigDecimal(max)) > 0;
     }
 }

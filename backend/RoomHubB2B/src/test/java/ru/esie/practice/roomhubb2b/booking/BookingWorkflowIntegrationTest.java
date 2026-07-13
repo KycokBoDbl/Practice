@@ -65,6 +65,8 @@ class BookingWorkflowIntegrationTest {
 
     private BookingActor landlord;
     private BookingActor tenant;
+    private BookingActor secondTenant;
+    private BookingActor thirdTenant;
     private BookingActor outsider;
     private Long listingId;
 
@@ -73,9 +75,13 @@ class BookingWorkflowIntegrationTest {
         clock.setInstant(Instant.parse("2030-01-01T00:00:00Z"));
         OrganizationEntity landlordOrganization = organization("Landlord");
         OrganizationEntity tenantOrganization = organization("Tenant");
+        OrganizationEntity secondTenantOrganization = organization("Second tenant");
+        OrganizationEntity thirdTenantOrganization = organization("Third tenant");
         OrganizationEntity outsiderOrganization = organization("Outsider");
         landlord = new BookingActor(landlordOrganization.getId(), UserRole.LANDLORD);
         tenant = new BookingActor(tenantOrganization.getId(), UserRole.TENANT);
+        secondTenant = new BookingActor(secondTenantOrganization.getId(), UserRole.TENANT);
+        thirdTenant = new BookingActor(thirdTenantOrganization.getId(), UserRole.TENANT);
         outsider = new BookingActor(outsiderOrganization.getId(), UserRole.TENANT);
 
         ListingEntity listing = listingRepository.findByStatus(ListingStatus.PUBLISHED).get(0);
@@ -160,18 +166,48 @@ class BookingWorkflowIntegrationTest {
         service.cancel(tenant, created.id());
         assertThat(historyRepository.countByBookingId(created.id())).isEqualTo(2);
 
-        BookingResponseDto rejected = create("2030-01-01T12:00", "2030-01-01T13:00");
+        BookingResponseDto rejected = create("2030-01-02T12:00", "2030-01-02T13:00");
         service.reject(landlord, rejected.id());
         service.reject(landlord, rejected.id());
         assertThat(historyRepository.countByBookingId(rejected.id())).isEqualTo(2);
     }
 
     @Test
+    void rejectsDuplicateApplicationForSameTenantListingAndStartDate() {
+        BookingResponseDto first = create("2030-01-02T10:00", "2030-01-02T11:00");
+        long bookingsBeforeDuplicate = bookingRepository.count();
+
+        BookingConflictException exception = assertThrows(
+                BookingConflictException.class,
+                () -> create("2030-01-02T12:00", "2030-01-02T13:00")
+        );
+
+        assertThat(exception.getMessage())
+                .isEqualTo("Tenant already has a booking request for this listing on this date");
+        assertThat(bookingRepository.count()).isEqualTo(bookingsBeforeDuplicate);
+        assertThat(historyRepository.countByBookingId(first.id())).isEqualTo(1);
+    }
+
+    @Test
+    void allowsSameListingApplicationsForDifferentDaysOrDifferentTenants() {
+        BookingResponseDto first = create("2030-01-03T10:00", "2030-01-03T11:00");
+        BookingResponseDto nextDay = create("2030-01-04T10:00", "2030-01-04T11:00");
+        BookingResponseDto anotherTenantSameDay = create(
+                secondTenant,
+                "2030-01-03T12:00",
+                "2030-01-03T13:00"
+        );
+
+        assertThat(nextDay.id()).isNotEqualTo(first.id());
+        assertThat(anotherTenantSameDay.id()).isNotEqualTo(first.id());
+    }
+
+    @Test
     void rejectsOverlappingButAllowsAdjacentIntervals() {
         BookingResponseDto first = create("2030-01-01T10:00", "2030-01-01T12:00");
         service.approve(landlord, first.id());
-        BookingResponseDto overlapping = create("2030-01-01T11:00", "2030-01-01T13:00");
-        BookingResponseDto adjacent = create("2030-01-01T12:00", "2030-01-01T13:00");
+        BookingResponseDto overlapping = create(secondTenant, "2030-01-01T11:00", "2030-01-01T13:00");
+        BookingResponseDto adjacent = create(thirdTenant, "2030-01-01T12:00", "2030-01-01T13:00");
 
         assertThrows(BookingConflictException.class, () -> service.approve(landlord, overlapping.id()));
         assertThat(service.approve(landlord, adjacent.id()).status())
@@ -183,7 +219,7 @@ class BookingWorkflowIntegrationTest {
         BookingResponseDto due = create("2030-01-01T10:00", "2030-01-01T11:00");
         service.approve(landlord, due.id());
         clock.setInstant(Instant.parse("2030-01-01T00:20:00Z"));
-        BookingResponseDto notDue = create("2030-01-01T12:00", "2030-01-01T13:00");
+        BookingResponseDto notDue = create("2030-01-02T12:00", "2030-01-02T13:00");
         service.approve(landlord, notDue.id());
         clock.setInstant(Instant.parse("2030-01-01T00:31:00Z"));
 
@@ -197,6 +233,10 @@ class BookingWorkflowIntegrationTest {
 
     private BookingResponseDto create(String startAt, String endAt) {
         return service.create(tenant, new CreateBookingRequestDto(listingId, startAt, endAt));
+    }
+
+    private BookingResponseDto create(BookingActor actor, String startAt, String endAt) {
+        return service.create(actor, new CreateBookingRequestDto(listingId, startAt, endAt));
     }
 
     private OrganizationEntity organization(String label) {

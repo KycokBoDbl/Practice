@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 
+import { getReturnToFromLocation } from './authRedirectState'
 import { useAuth } from './useAuth'
 
 interface RequireAuthProps {
@@ -16,7 +17,13 @@ export function RequireAuth({ children }: RequireAuthProps) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace state={{ from: location }} />
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ returnTo: getReturnToFromLocation(location) }}
+      />
+    )
   }
 
   return children

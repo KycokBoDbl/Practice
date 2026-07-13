@@ -29,17 +29,10 @@ export function Header() {
           <>
             {profile?.role === 'LANDLORD' && (
               <>
-                <NavLink
-                  to="/spaces/new"
-                  className={({ isActive }) => getLinkClass(isActive)}
-                >
+                <NavLink to="/spaces/new" className={({ isActive }) => getLinkClass(isActive)}>
                   Опубликовать
                 </NavLink>
-
-                <NavLink
-                  to="/my-listings"
-                  className={({ isActive }) => getLinkClass(isActive)}
-                >
+                <NavLink to="/my-listings" className={({ isActive }) => getLinkClass(isActive)}>
                   Мои объявления
                 </NavLink>
               </>

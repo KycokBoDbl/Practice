@@ -1,6 +1,62 @@
 .calendar {
   display: grid;
   gap: 24px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.previewCalendar {
+  gap: 12px;
+}
+
+.previewCalendar .header h2 {
+  margin-bottom: 4px;
+  font-size: 18px;
+}
+
+.previewCalendar .header p,
+.previewCalendar .legend {
+  font-size: 12px;
+}
+
+.previewCalendar .legend {
+  gap: 8px;
+}
+
+.previewCalendar .monthCard {
+  padding: 12px;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.previewCalendar .monthGrid {
+  gap: 5px;
+}
+
+.previewCalendar .dayButton {
+  min-height: 48px;
+  padding: 5px;
+  border-radius: 10px;
+}
+
+.previewCalendar .dayButton small {
+  margin-top: 3px;
+  font-size: 9px;
+}
+
+.previewCalendar .monthNavButton {
+  width: 30px;
+  height: 30px;
+  font-size: 15px;
+}
+
+.previewCalendar .monthTitle {
+  font-size: 15px;
+}
+
+.previewCalendar .section h3 {
+  font-size: 15px;
 }
 
 .header h2 {
@@ -48,6 +104,9 @@
 }
 
 .monthCard {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding: 20px;
   border: 1px solid #e5e7eb;
   border-radius: 20px;
@@ -61,7 +120,8 @@
 
 .weekDays {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  width: 100%;
   margin-bottom: 8px;
   color: #64748b;
   font-size: 14px;
@@ -70,11 +130,14 @@
 
 .monthGrid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  width: 100%;
   gap: 8px;
 }
 
 .dayButton {
+  width: 100%;
+  min-width: 0;
   min-height: 72px;
   padding: 8px;
   border: 1px solid #e5e7eb;
@@ -96,6 +159,8 @@
   margin-top: 6px;
   font-size: 11px;
   font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .available {
@@ -141,6 +206,44 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.availabilityList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  gap: 6px;
+}
+
+.availabilityItem {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 7px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.availabilityTime {
+  color: #111827;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.availabilityState {
+  width: 100%;
+  min-width: 0;
+  padding: 3px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .slotButton {
@@ -202,10 +305,17 @@
   font-size: 14px;
 }
 
+.error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
 .monthHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   margin-bottom: 16px;
 }
 
@@ -225,11 +335,19 @@
 }
 
 .monthTitle {
+  min-width: 0;
   margin: 0;
   text-transform: capitalize;
+  text-align: center;
 }
 
 .monthNavButton:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+@media (max-width: 520px) {
+  .availabilityList {
+    grid-template-columns: 1fr;
+  }
 }

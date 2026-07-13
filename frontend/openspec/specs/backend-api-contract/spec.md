@@ -77,6 +77,25 @@ The backend SHALL persist an append-only history entry for each booking status t
 - **WHEN** an authorized participant calls `GET /api/bookings/{bookingId}/history`
 - **THEN** the backend SHALL return history ordered by creation time and id
 
+### Requirement: Backend exposes participant booking inbox
+The backend SHALL expose an authenticated participant booking inbox endpoint for tenants and landlords.
+
+#### Scenario: Booking inbox is requested
+- **WHEN** an authenticated participant calls `GET /api/bookings`
+- **THEN** the backend SHALL return bookings visible to that participant organization
+
+#### Scenario: Booking inbox response is returned
+- **WHEN** the backend returns booking inbox items
+- **THEN** each item SHALL include id, listingId, listingTitle, status, startAt, endAt, pricePerHour, totalPrice, confirmationDeadline, tenantOrganizationName, landlordOrganizationName, createdAt, and updatedAt
+
+#### Scenario: Booking inbox status filter is used
+- **WHEN** `GET /api/bookings` receives a `status` query parameter with a known booking status
+- **THEN** the backend SHALL filter returned bookings by that status within the participant boundary
+
+#### Scenario: Booking inbox request is unauthorized
+- **WHEN** `GET /api/bookings` is called without valid bearer authentication
+- **THEN** the backend SHALL reject the request as unauthorized
+
 ### Requirement: Backend keeps OpenAPI contract current
 The backend SHALL publish the runtime OpenAPI document at `/api/openapi` and keep the exported `openapi/roomhub-b2b.openapi.json` synchronized with intentional API changes.
 

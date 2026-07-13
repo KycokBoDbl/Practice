@@ -106,6 +106,11 @@ export async function publishListing(
   return response.data
 }
 
+export async function getOwnedListings(): Promise<OwnedListing[]> {
+  const response = await api.get<OwnedListing[]>('/api/listings/owned')
+  return response.data
+}
+
 export async function updateListing(
   listingId: number | string,
   request: UpdateListingRequest,

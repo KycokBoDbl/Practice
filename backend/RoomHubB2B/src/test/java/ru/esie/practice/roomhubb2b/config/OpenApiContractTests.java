@@ -51,6 +51,8 @@ class OpenApiContractTests {
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.description").exists())
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.address").exists())
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationName").exists())
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.latitude").exists())
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.longitude").exists())
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationId")
                         .doesNotExist());
     }
@@ -90,6 +92,10 @@ class OpenApiContractTests {
                 .andExpect(jsonPath("$.components.schemas.CreateListingRequestDto.properties.status")
                         .doesNotExist())
                 .andExpect(jsonPath("$.components.schemas.CreateListingRequestDto.properties.createdAt")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.components.schemas.CreateListingRequestDto.properties.latitude")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.components.schemas.CreateListingRequestDto.properties.longitude")
                         .doesNotExist())
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.description.type")
                         .value(org.hamcrest.Matchers.containsInAnyOrder("string", "null")))
@@ -166,7 +172,13 @@ class OpenApiContractTests {
                         .doesNotExist())
                 .andExpect(jsonPath("$.components.schemas.UpdateListingRequestDto.properties.createdAt")
                         .doesNotExist())
+                .andExpect(jsonPath("$.components.schemas.UpdateListingRequestDto.properties.latitude")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.components.schemas.UpdateListingRequestDto.properties.longitude")
+                        .doesNotExist())
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationName").exists())
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.latitude").exists())
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.longitude").exists())
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationId")
                         .doesNotExist())
                 .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.id").exists())
@@ -180,6 +192,8 @@ class OpenApiContractTests {
                 .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.address").exists())
                 .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.ownerOrganizationName")
                         .exists())
+                .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.latitude").exists())
+                .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.longitude").exists())
                 .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.status").exists())
                 .andExpect(jsonPath("$.components.schemas.OwnedListingResponseDto.properties.ownerOrganizationId")
                         .doesNotExist());
@@ -221,7 +235,7 @@ class OpenApiContractTests {
         mockMvc.perform(get("/api/listings"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].length()").value(10))
+                .andExpect(jsonPath("$[0].length()").value(12))
                 .andExpect(jsonPath("$[0].id").exists())
                 .andExpect(jsonPath("$[0].title").exists())
                 .andExpect(jsonPath("$[0].city").exists())
@@ -230,7 +244,9 @@ class OpenApiContractTests {
                 .andExpect(jsonPath("$[?(@.spaceType == 'MEETING_ROOM')]").exists())
                 .andExpect(jsonPath("$[0].imageUrl").exists())
                 .andExpect(jsonPath("$[0].description").exists())
-                .andExpect(jsonPath("$[0].address").exists());
+                .andExpect(jsonPath("$[0].address").exists())
+                .andExpect(jsonPath("$[0].latitude").hasJsonPath())
+                .andExpect(jsonPath("$[0].longitude").hasJsonPath());
     }
 
     @Test
@@ -288,6 +304,8 @@ class OpenApiContractTests {
                 .andExpect(jsonPath("$.components.schemas.CreateBookingRequestDto.properties.tenantOrganizationId")
                         .doesNotExist())
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationName").exists())
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.latitude").exists())
+                .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.longitude").exists())
                 .andExpect(jsonPath("$.components.schemas.ListingResponseDto.properties.ownerOrganizationId")
                         .doesNotExist());
     }

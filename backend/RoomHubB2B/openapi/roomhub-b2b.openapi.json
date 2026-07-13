@@ -1465,6 +1465,16 @@
             "type" : [ "string", "null" ],
             "description" : "Owner organization display name",
             "example" : "Landlord LLC"
+          },
+          "latitude" : {
+            "type" : [ "number", "null" ],
+            "description" : "Geocoded latitude for map marker placement",
+            "example" : 53.348114
+          },
+          "longitude" : {
+            "type" : [ "number", "null" ],
+            "description" : "Geocoded longitude for map marker placement",
+            "example" : 83.779836
           }
         }
       },
@@ -1817,6 +1827,16 @@
             "type" : [ "string", "null" ],
             "description" : "Owner organization display name",
             "example" : "Landlord LLC"
+          },
+          "latitude" : {
+            "type" : [ "number", "null" ],
+            "description" : "Geocoded latitude for map marker placement",
+            "example" : 53.348114
+          },
+          "longitude" : {
+            "type" : [ "number", "null" ],
+            "description" : "Geocoded longitude for map marker placement",
+            "example" : 83.779836
           },
           "status" : {
             "type" : "string",

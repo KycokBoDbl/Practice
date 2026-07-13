@@ -23,6 +23,7 @@ interface MonthCardProps {
   onPreviousMonth: () => void
   onSelectDate: (dateValue: string) => void
   selectedDate: string
+  showDayLabels?: boolean
   visibleMonth: Date
 }
 
@@ -34,6 +35,7 @@ export function MonthCard({
   onPreviousMonth,
   onSelectDate,
   selectedDate,
+  showDayLabels = true,
   visibleMonth,
 }: MonthCardProps) {
   return (
@@ -44,6 +46,7 @@ export function MonthCard({
           className={styles.monthNavButton}
           onClick={onPreviousMonth}
           disabled={isCurrentMonth}
+          aria-label="Предыдущий месяц"
         >
           ←
         </button>
@@ -54,6 +57,7 @@ export function MonthCard({
           type="button"
           className={styles.monthNavButton}
           onClick={onNextMonth}
+          aria-label="Следующий месяц"
         >
           →
         </button>
@@ -88,9 +92,11 @@ export function MonthCard({
               onClick={() => onSelectDate(item.value)}
             >
               <span>{item.day}</span>
-              <small>
-                {item.isPast ? 'Прошло' : getDayStatusLabel(status)}
-              </small>
+              {showDayLabels && (
+                <small>
+                  {item.isPast ? 'Прошло' : getDayStatusLabel(status)}
+                </small>
+              )}
             </button>
           )
         })}
@@ -100,6 +106,7 @@ export function MonthCard({
 }
 
 interface TimeSlotsSectionProps {
+  availabilityError: string | null
   availabilityLoading: boolean
   busyIntervals: BusyInterval[]
   mode: 'preview' | 'booking'
@@ -109,6 +116,7 @@ interface TimeSlotsSectionProps {
 }
 
 export function TimeSlotsSection({
+  availabilityError,
   availabilityLoading,
   busyIntervals,
   mode,
@@ -116,6 +124,39 @@ export function TimeSlotsSection({
   selectedDate,
   selectedTime,
 }: TimeSlotsSectionProps) {
+  if (mode === 'preview') {
+    return (
+      <div className={styles.section}>
+        <h3>Доступность на выбранный день</h3>
+
+        {availabilityLoading && (
+          <p className={styles.loading}>Проверяем занятость...</p>
+        )}
+
+        {availabilityError && (
+          <p className={styles.error} role="status">
+            {availabilityError}
+          </p>
+        )}
+
+        <div className={styles.availabilityList}>
+          {timeSlots.map((slot) => {
+            const status = getSlotStatus(selectedDate, slot, busyIntervals)
+
+            return (
+              <div key={slot} className={styles.availabilityItem}>
+                <span className={styles.availabilityTime}>{slot}</span>
+                <span className={`${styles.availabilityState} ${styles[status]}`}>
+                  {getHourStatusLabel(status)}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={styles.section}>
       <h3>Доступное время</h3>
@@ -124,10 +165,16 @@ export function TimeSlotsSection({
         <p className={styles.loading}>Проверяем занятость...</p>
       )}
 
+      {availabilityError && (
+        <p className={styles.error} role="status">
+          {availabilityError}
+        </p>
+      )}
+
       <div className={styles.slots}>
         {timeSlots.map((slot) => {
           const status = getSlotStatus(selectedDate, slot, busyIntervals)
-          const disabled = status === 'booked' || mode === 'preview'
+          const disabled = status === 'booked'
 
           return (
             <button

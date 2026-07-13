@@ -4,6 +4,12 @@ export interface AuthRedirectState {
   returnTo?: string
 }
 
+interface ReturnToLocation {
+  pathname: string
+  search: string
+  hash: string
+}
+
 export function getSafeReturnTo(returnTo: unknown) {
   if (typeof returnTo !== 'string') {
     return null
@@ -18,6 +24,10 @@ export function getSafeReturnTo(returnTo: unknown) {
   }
 
   return returnTo
+}
+
+export function getReturnToFromLocation(location: ReturnToLocation) {
+  return getSafeReturnTo(`${location.pathname}${location.search}${location.hash}`) ?? undefined
 }
 
 export function getAuthRedirectState(state: unknown): AuthRedirectState {

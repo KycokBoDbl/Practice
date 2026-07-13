@@ -1,36 +1,22 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
-import { getListings } from '../../api/listings'
-import type { Listing } from '../../types/listing'
+import { useAuth } from '../../auth/useAuth'
 import { getSpaceTypeLabel } from '../../types/spaceType'
 import { CatalogSearch } from './CatalogSearch'
 import { filterCatalogListings, parseCatalogQuery } from './catalogFilters'
 import styles from './SpacesPage.module.css'
+import { useListingsPolling } from './useListingsPolling'
 
 export function SpacesPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [listings, setListings] = useState<Listing[]>([])
-  const [loading, setLoading] = useState(true)
+  const { isAuthenticated, loading: authLoading } = useAuth()
+  const { listings, loading } = useListingsPolling()
   const catalogQuery = useMemo(
     () => parseCatalogQuery(searchParams),
     [searchParams],
   )
-
-  useEffect(() => {
-    async function loadListings() {
-      try {
-        const data = await getListings()
-        setListings(data)
-      } catch (error) {
-        console.error('Ошибка при загрузке помещений:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadListings()
-  }, [])
+  const showProjectBanner = !authLoading && !isAuthenticated
 
   const filteredListings = useMemo(
     () => filterCatalogListings(listings, catalogQuery),
@@ -47,46 +33,55 @@ export function SpacesPage() {
 
   return (
     <main className={styles.page}>
-      <div className={styles.hero}>
-        <div>
-          <h1 className={styles.title}>Помещения для бизнеса и мероприятий</h1>
-          <p className={styles.subtitle}>
-            Просматривайте доступные пространства, изучайте
-            подробную информацию и выбирайте подходящую площадку
-            для встреч, обучения и корпоративных мероприятий.
-          </p>
-        </div>
-        <div className={styles.features}>
-          <div className={styles.feature}>
-            <span className={styles.featureIcon}>🏢</span>
-            <div>
-              <h3>Разные типы помещений</h3>
-              <p>Переговорные, конференц-залы, классы, лофты и шоурумы.</p>
-            </div>
+      {showProjectBanner && (
+        <div className={styles.hero}>
+          <div>
+            <h1 className={styles.title}>Помещения для бизнеса и мероприятий</h1>
+            <p className={styles.subtitle}>
+              Просматривайте доступные пространства, изучайте подробную
+              информацию и выбирайте подходящую площадку для встреч, обучения и
+              корпоративных мероприятий.
+            </p>
           </div>
+          <div className={styles.features}>
+            <div className={styles.feature}>
+              <span className={styles.featureIcon}>🏢</span>
+              <div>
+                <h3>Разные типы помещений</h3>
+                <p>Переговорные, конференц-залы, классы, лофты и шоурумы.</p>
+              </div>
+            </div>
 
-          <div className={styles.feature}>
-            <span className={styles.featureIcon}>📍</span>
-            <div>
-              <h3>Несколько городов</h3>
-              <p>Выбирайте площадки в Москве, Санкт-Петербурге, Казани и других городах.</p>
+            <div className={styles.feature}>
+              <span className={styles.featureIcon}>📍</span>
+              <div>
+                <h3>Несколько городов</h3>
+                <p>
+                  Выбирайте площадки в Москве, Санкт-Петербурге, Казани и
+                  других городах.
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div className={styles.feature}>
-            <span className={styles.featureIcon}>🕒</span>
-            <div>
-              <h3>Почасовая аренда</h3>
-              <p>Сравнивайте стоимость и подбирайте помещение под нужное время.</p>
+            <div className={styles.feature}>
+              <span className={styles.featureIcon}>🕒</span>
+              <div>
+                <h3>Почасовая аренда</h3>
+                <p>
+                  Сравнивайте стоимость и подбирайте помещение под нужное время.
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       <section className={styles.catalogHeader} id="catalog">
         <div>
           <h2>Каталог помещений</h2>
-          <p>Выберите подходящее пространство и перейдите к подробному описанию.</p>
+          <p>
+            Выберите подходящее пространство и перейдите к подробному описанию.
+          </p>
         </div>
       </section>
 

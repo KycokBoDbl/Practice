@@ -5,10 +5,13 @@ import type { Listing } from '../../types/listing'
 import styles from './SpacesPage.module.css'
 import {
   emptyCatalogQuery,
+  getActiveCatalogFilterBadges,
   getCatalogCityOptions,
+  isCatalogQueryEmpty,
   parseCatalogQuery,
   setCatalogQueryParams,
   type CatalogQuery,
+  type CatalogSearchParamName,
 } from './catalogFilters'
 
 interface CatalogSearchProps {
@@ -21,6 +24,7 @@ export function CatalogSearch({ listings }: CatalogSearchProps) {
     () => parseCatalogQuery(searchParams),
     [searchParams],
   )
+
   return (
     <CatalogSearchForm
       key={searchParams.toString()}
@@ -47,6 +51,12 @@ function CatalogSearchForm({
   const [filtersOpen, setFiltersOpen] = useState(false)
   const searchAreaRef = useRef<HTMLDivElement>(null)
   const cities = useMemo(() => getCatalogCityOptions(listings), [listings])
+  const activeFilterBadges = useMemo(
+    () => getActiveCatalogFilterBadges(committedQuery),
+    [committedQuery],
+  )
+  const hasActiveFilters = activeFilterBadges.length > 0
+  const filtersVisible = filtersOpen || hasActiveFilters
 
   useEffect(() => {
     function handlePointerDown(event: PointerEvent) {
@@ -103,26 +113,36 @@ function CatalogSearchForm({
     }))
   }
 
-  function runSearch() {
-    const nextParams = setCatalogQueryParams(searchParams, draftQuery)
+  function navigateWithQuery(query: CatalogQuery) {
+    const nextParams = setCatalogQueryParams(searchParams, query)
+    const hasNextFilters = !isCatalogQueryEmpty(query)
 
-    setFiltersOpen(false)
+    setFiltersOpen(hasNextFilters)
 
     navigate({
       pathname: '/',
       search: nextParams.toString(),
-      hash: 'catalog',
+      hash: hasNextFilters ? 'catalog' : undefined,
     })
+  }
+
+  function runSearch() {
+    navigateWithQuery(draftQuery)
   }
 
   function resetFilters() {
     setDraftQuery(emptyCatalogQuery)
-    setFiltersOpen(false)
+    navigateWithQuery(emptyCatalogQuery)
+  }
 
-    navigate({
-      pathname: '/',
-      search: '',
-    })
+  function removeFilter(name: CatalogSearchParamName) {
+    const nextQuery = {
+      ...committedQuery,
+      [name]: '',
+    }
+
+    setDraftQuery(nextQuery)
+    navigateWithQuery(nextQuery)
   }
 
   return (
@@ -145,7 +165,29 @@ function CatalogSearchForm({
         />
       </form>
 
-      {filtersOpen && (
+      {hasActiveFilters && (
+        <div className={styles.activeFilters} aria-label="Активные фильтры каталога">
+          <span className={styles.activeFiltersLabel}>Поиск по фильтрам:</span>
+          <div className={styles.filterBadges}>
+            {activeFilterBadges.map((badge) => (
+              <button
+                key={badge.key}
+                type="button"
+                className={styles.filterBadge}
+                onClick={() => removeFilter(badge.key)}
+                aria-label={`Убрать фильтр ${badge.label}`}
+              >
+                <span>
+                  {badge.label}: {badge.value}
+                </span>
+                <span aria-hidden="true">×</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {filtersVisible && (
         <div className={styles.filters} aria-label="Фильтры каталога">
           <label className={styles.filterField}>
             <span>Город</span>

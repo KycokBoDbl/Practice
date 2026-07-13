@@ -1,273 +1,56 @@
-﻿import { useEffect, useMemo, useState, type FormEvent } from 'react'
+﻿import { useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 
-import {
-  activateListing,
-  deleteListing,
-  getOwnedListings,
-  hideListing,
-  parseListingManagementApiError,
-  updateListing,
-} from '../../api/listings'
+import { parseListingManagementApiError, updateListing } from '../../api/listings'
 import { useAuth } from '../../auth/useAuth'
-import type { ListingLifecycleStatus, OwnedListing } from '../../types/listing'
-import { getSpaceTypeLabel, SPACE_TYPE_LABELS, type KnownSpaceType } from '../../types/spaceType'
+import type { OwnedListing } from '../../types/listing'
+import { getSpaceTypeLabel, type KnownSpaceType } from '../../types/spaceType'
 import {
   AMENITY_GROUPS,
   RUSSIAN_CITY_OPTIONS,
 } from '../ListingPublication/listingPublicationOptions'
+import { MyListingCard } from './MyListingCard'
+import {
+  buildListingDescription,
+  EDIT_FIELD_IDS,
+  EDIT_FIELD_ORDER,
+  FILTERS,
+  formatPrice,
+  getInitialEditForm,
+  hasErrors,
+  isValidHttpUrl,
+  normalizeOptionalValue,
+  normalizeText,
+  SPACE_TYPE_OPTIONS,
+  splitListingDescription,
+  STATE_TITLES,
+  STATUS_LABELS,
+  validateEditForm,
+  type EditFormErrors,
+  type EditFormState,
+  type ListingFilter,
+} from './myListingsHelpers'
 import styles from './MyListingsPage.module.css'
-
-type ManagementState = 'loading' | 'loaded' | 'empty' | 'error'
-type ListingFilter = 'all' | ListingLifecycleStatus
-type ListingAction = 'hide' | 'activate' | 'delete'
-
-interface EditFormState {
-  title: string
-  spaceType: KnownSpaceType
-  city: string
-  address: string
-  capacity: string
-  pricePerHour: string
-  description: string
-  imageUrl: string
-}
-
-interface EditFormErrors {
-  title?: string
-  spaceType?: string
-  city?: string
-  address?: string
-  capacity?: string
-  pricePerHour?: string
-  description?: string
-  imageUrl?: string
-  form?: string
-}
-
-const CURRENCY_FORMAT = new Intl.NumberFormat('ru-RU')
-
-const FILTERS: Array<{ value: ListingFilter; label: string }> = [
-  { value: 'all', label: 'Все' },
-  { value: 'PUBLISHED', label: 'Активные' },
-  { value: 'ARCHIVED', label: 'Скрытые' },
-]
-
-const STATUS_LABELS: Record<ListingLifecycleStatus, string> = {
-  PUBLISHED: 'Активное',
-  ARCHIVED: 'Скрытое',
-}
-
-const STATE_TITLES: Record<ManagementState, string> = {
-  loading: 'Загружаем ваши объявления...',
-  loaded: 'Готово',
-  empty: 'Объявлений пока нет',
-  error: 'Не удалось загрузить объявления',
-}
-
-const SPACE_TYPE_OPTIONS = Object.entries(SPACE_TYPE_LABELS) as Array<
-  [KnownSpaceType, string]
->
-
-const EDIT_FIELD_IDS: Record<keyof EditFormState, string> = {
-  title: 'listing-edit-title',
-  spaceType: 'listing-edit-space-type',
-  city: 'listing-edit-city',
-  address: 'listing-edit-address',
-  capacity: 'listing-edit-capacity',
-  pricePerHour: 'listing-edit-price',
-  description: 'listing-edit-description',
-  imageUrl: 'listing-edit-image-url',
-}
-
-const EDIT_FIELD_ORDER: Array<keyof EditFormState> = [
-  'title',
-  'spaceType',
-  'city',
-  'address',
-  'capacity',
-  'pricePerHour',
-  'description',
-  'imageUrl',
-]
-
-const AMENITY_LINE_PREFIX = 'Удобства: '
-
-function formatPrice(value: number) {
-  return `${CURRENCY_FORMAT.format(value)} ₽`
-}
-
-function normalizeText(value: string | null | undefined) {
-  const text = value?.trim()
-  return text ? text : 'Не указан'
-}
-
-function normalizeOptionalValue(value: string) {
-  const trimmedValue = value.trim()
-  return trimmedValue === '' ? null : trimmedValue
-}
-
-function isValidHttpUrl(value: string) {
-  try {
-    const url = new URL(value)
-    return url.protocol === 'http:' || url.protocol === 'https:'
-  } catch {
-    return false
-  }
-}
-
-function buildListingDescription(description: string, amenities: string[]) {
-  const normalizedDescription = normalizeOptionalValue(description)
-
-  if (amenities.length === 0) {
-    return normalizedDescription
-  }
-
-  const amenityLine = `${AMENITY_LINE_PREFIX}${amenities.join(', ')}.`
-
-  return normalizedDescription ? `${normalizedDescription}\n\n${amenityLine}` : amenityLine
-}
-
-function splitListingDescription(value: string | null | undefined) {
-  const trimmedValue = value?.trim()
-
-  if (!trimmedValue) {
-    return { description: '', amenities: [] as string[] }
-  }
-
-  const lines = trimmedValue.split(/\r?\n/)
-  const lastLine = lines[lines.length - 1]?.trim()
-
-  if (!lastLine?.startsWith(AMENITY_LINE_PREFIX) || !lastLine.endsWith('.')) {
-    return { description: trimmedValue, amenities: [] as string[] }
-  }
-
-  const amenities = Array.from(
-    new Set(
-      lastLine
-        .slice(AMENITY_LINE_PREFIX.length, -1)
-        .split(',')
-        .map((amenity) => amenity.trim())
-        .filter(Boolean),
-    ),
-  )
-
-  return {
-    description: lines.slice(0, -1).join('\n').trim(),
-    amenities,
-  }
-}
-
-function validateEditForm(form: EditFormState): EditFormErrors {
-  const errors: EditFormErrors = {}
-  const capacity = Number(form.capacity)
-  const pricePerHour = Number(form.pricePerHour)
-
-  if (!form.title.trim()) {
-    errors.title = 'Укажите название помещения.'
-  }
-
-  if (!form.city.trim()) {
-    errors.city = 'Укажите город.'
-  }
-
-  if (!form.address.trim()) {
-    errors.address = 'Укажите адрес.'
-  }
-
-  if (!Number.isInteger(capacity) || capacity < 1) {
-    errors.capacity = 'Вместимость должна быть целым числом от 1.'
-  }
-
-  if (!Number.isFinite(pricePerHour) || pricePerHour <= 0) {
-    errors.pricePerHour = 'Цена за час должна быть положительным числом.'
-  }
-
-  const imageUrl = form.imageUrl.trim()
-
-  if (imageUrl && !isValidHttpUrl(imageUrl)) {
-    errors.imageUrl = 'Ссылка на изображение должна начинаться с http:// или https://.'
-  }
-
-  return errors
-}
-
-function hasErrors(errors: EditFormErrors) {
-  return Object.values(errors).some(Boolean)
-}
-
-function getInitialEditForm(listing: OwnedListing): EditFormState {
-  const { description } = splitListingDescription(listing.description)
-
-  return {
-    title: listing.title,
-    spaceType: listing.spaceType as KnownSpaceType,
-    city: listing.city,
-    address: listing.address,
-    capacity: String(listing.capacity),
-    pricePerHour: String(listing.pricePerHour),
-    description,
-    imageUrl: listing.imageUrl ?? '',
-  }
-}
+import { useOwnedListingsManagement } from './useOwnedListingsManagement'
 
 export function MyListingsPage() {
   const { loading, profile } = useAuth()
-  const [items, setItems] = useState<OwnedListing[]>([])
-  const [state, setState] = useState<ManagementState>('loading')
-  const [message, setMessage] = useState('')
+  const {
+    handleListingAction,
+    items,
+    message,
+    notice,
+    pendingAction,
+    setItems,
+    setNotice,
+    state,
+  } = useOwnedListingsManagement(!loading && profile?.role === 'LANDLORD')
   const [filter, setFilter] = useState<ListingFilter>('all')
   const [editingListing, setEditingListing] = useState<OwnedListing | null>(null)
   const [editForm, setEditForm] = useState<EditFormState | null>(null)
   const [editAmenities, setEditAmenities] = useState<string[]>([])
   const [editErrors, setEditErrors] = useState<EditFormErrors>({})
   const [saving, setSaving] = useState(false)
-  const [notice, setNotice] = useState<{ kind: 'error' | 'success'; text: string } | null>(
-    null,
-  )
-  const [pendingAction, setPendingAction] = useState<{
-    listingId: number
-    action: ListingAction
-  } | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function loadOwnedListings() {
-      if (loading || profile?.role !== 'LANDLORD') {
-        return
-      }
-
-      setState('loading')
-      setMessage('')
-
-      try {
-        const ownedListings = await getOwnedListings()
-
-        if (cancelled) {
-          return
-        }
-
-        setItems(ownedListings)
-        setState(ownedListings.length === 0 ? 'empty' : 'loaded')
-      } catch (error) {
-        if (cancelled) {
-          return
-        }
-
-        const parsedError = parseListingManagementApiError(error)
-        setItems([])
-        setState('error')
-        setMessage(parsedError.message || 'Не удалось загрузить список объявлений.')
-      }
-    }
-
-    loadOwnedListings()
-
-    return () => {
-      cancelled = true
-    }
-  }, [loading, profile?.role])
 
   const filteredItems = useMemo(() => {
     if (filter === 'all') {
@@ -430,63 +213,6 @@ export function MyListingsPage() {
     }
   }
 
-  function updateListingStatus(listingId: number, status: ListingLifecycleStatus) {
-    setItems((currentItems) =>
-      currentItems.map((item) => (item.id === listingId ? { ...item, status } : item)),
-    )
-  }
-
-  function removeListing(listingId: number) {
-    setItems((currentItems) => currentItems.filter((item) => item.id !== listingId))
-  }
-
-  async function handleListingAction(listing: OwnedListing, action: ListingAction) {
-    setNotice(null)
-    setPendingAction({ listingId: listing.id, action })
-
-    try {
-      if (action === 'hide') {
-        await hideListing(listing.id)
-        updateListingStatus(listing.id, 'ARCHIVED')
-        setNotice({ kind: 'success', text: 'Объявление скрыто.' })
-        return
-      }
-
-      if (action === 'activate') {
-        await activateListing(listing.id)
-        updateListingStatus(listing.id, 'PUBLISHED')
-        setNotice({ kind: 'success', text: 'Объявление снова опубликовано.' })
-        return
-      }
-
-      const confirmed = window.confirm('Удалить объявление безвозвратно?')
-
-      if (!confirmed) {
-        return
-      }
-
-      await deleteListing(listing.id)
-      removeListing(listing.id)
-      setNotice({ kind: 'success', text: 'Объявление удалено.' })
-    } catch (error) {
-      const parsedError = parseListingManagementApiError(error)
-
-      setNotice({
-        kind: 'error',
-        text:
-          action === 'delete' && parsedError.kind === 'conflict'
-            ? 'Нельзя удалить объявление, пока по нему сохраняется история бронирований.'
-            : parsedError.kind === 'forbidden'
-              ? 'Для этого действия недостаточно прав.'
-              : parsedError.kind === 'notFound'
-                ? 'Объявление не найдено.'
-                : parsedError.message || 'Не удалось выполнить действие.',
-      })
-    } finally {
-      setPendingAction(null)
-    }
-  }
-
   if (loading) {
     return <main className={styles.page}>{STATE_TITLES.loading}</main>
   }
@@ -590,90 +316,15 @@ export function MyListingsPage() {
             ) : (
               <section className={styles.grid} aria-label="Список объявлений">
                 {filteredItems.map((listing) => (
-                  <article key={listing.id} className={styles.card}>
-                    <div className={styles.cardHeader}>
-                      <div>
-                        <h2 className={styles.cardTitle}>{listing.title}</h2>
-                        <p className={styles.cardMeta}>
-                          {listing.city} • {listing.address}
-                        </p>
-                      </div>
-                      <span className={styles.status}>{STATUS_LABELS[listing.status]}</span>
-                    </div>
-
-                    <dl className={styles.details}>
-                      <div>
-                        <dt>Владелец</dt>
-                        <dd>{normalizeText(listing.ownerOrganizationName)}</dd>
-                      </div>
-                      <div>
-                        <dt>Тип</dt>
-                        <dd>{getSpaceTypeLabel(listing.spaceType)}</dd>
-                      </div>
-                      <div>
-                        <dt>Вместимость</dt>
-                        <dd>до {listing.capacity} человек</dd>
-                      </div>
-                      <div>
-                        <dt>Цена</dt>
-                        <dd>{formatPrice(listing.pricePerHour)} / час</dd>
-                      </div>
-                    </dl>
-
-                    <p className={styles.description}>
-                      {listing.description?.trim() || 'Описание пока не добавлено.'}
-                    </p>
-
-                    <div className={styles.actionsRow}>
-                      <button
-                        type="button"
-                        className={styles.secondaryButton}
-                        onClick={() => openEditForm(listing)}
-                        disabled={Boolean(pendingAction)}
-                      >
-                        Редактировать
-                      </button>
-                      {listing.status === 'PUBLISHED' ? (
-                        <button
-                          type="button"
-                          className={styles.secondaryButton}
-                          onClick={() => handleListingAction(listing, 'hide')}
-                          disabled={
-                            pendingAction?.listingId === listing.id &&
-                            pendingAction.action === 'hide'
-                          }
-                        >
-                          Скрыть
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className={styles.secondaryButton}
-                          onClick={() => handleListingAction(listing, 'activate')}
-                          disabled={
-                            pendingAction?.listingId === listing.id &&
-                            pendingAction.action === 'activate'
-                          }
-                        >
-                          Опубликовать снова
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        className={styles.secondaryButton}
-                        onClick={() => handleListingAction(listing, 'delete')}
-                        disabled={
-                          pendingAction?.listingId === listing.id &&
-                          pendingAction.action === 'delete'
-                        }
-                      >
-                        Удалить
-                      </button>
-                      <Link to={`/spaces/${listing.id}`} className={styles.linkButton}>
-                        Открыть в каталоге
-                      </Link>
-                    </div>
-                  </article>
+                  <MyListingCard
+                    key={listing.id}
+                    listing={listing}
+                    pendingAction={pendingAction}
+                    onAction={(targetListing, action) => {
+                      void handleListingAction(targetListing, action)
+                    }}
+                    onEdit={openEditForm}
+                  />
                 ))}
               </section>
             )}

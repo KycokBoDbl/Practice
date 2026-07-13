@@ -117,7 +117,9 @@
 }
 
 .featureIcon {
+  min-width: 24px;
   font-size: 24px;
+  line-height: 1;
 }
 
 .feature h3 {
@@ -171,16 +173,62 @@
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
 }
 
+.activeFilters {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #f8fbff;
+}
+
+.activeFiltersLabel {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.filterBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filterBadge {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  max-width: 100%;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1e40af;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.filterBadge span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filterBadge:hover {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
 .filters {
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 0;
-  right: 0;
-  z-index: 30;
   display: grid;
   grid-template-columns: 1.1fr repeat(2, minmax(150px, 1fr)) auto auto;
   gap: 12px;
   align-items: start;
+  margin-top: 10px;
   padding: 14px;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
