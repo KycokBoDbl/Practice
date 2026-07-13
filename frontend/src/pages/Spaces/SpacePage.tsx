@@ -128,6 +128,13 @@ export function SpacePage() {
 
             <div className={styles.metaGrid}>
               <div className={styles.metaCard}>
+                <p className={styles.metaLabel}>Владелец</p>
+                <p className={styles.metaValue}>
+                  {listing.ownerOrganizationName?.trim() || 'Не указан'}
+                </p>
+              </div>
+
+              <div className={styles.metaCard}>
                 <p className={styles.metaLabel}>Город</p>
                 <p className={styles.metaValue}>{listing.city}</p>
               </div>

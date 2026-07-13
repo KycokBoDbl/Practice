@@ -94,6 +94,11 @@ export async function getListings(): Promise<Listing[]> {
   return response.data
 }
 
+export async function getOwnedListings(): Promise<OwnedListing[]> {
+  const response = await api.get<OwnedListing[]>('/api/listings/owned')
+  return response.data
+}
+
 export async function publishListing(
   request: CreateListingRequest,
 ): Promise<Listing> {
@@ -107,22 +112,28 @@ export async function getOwnedListings(): Promise<OwnedListing[]> {
 }
 
 export async function updateListing(
-  listingId: number,
+  listingId: number | string,
   request: UpdateListingRequest,
 ): Promise<Listing> {
   const response = await api.put<Listing>(`/api/listings/${listingId}`, request)
   return response.data
 }
 
-export async function hideListing(listingId: number): Promise<void> {
+export async function hideListing(
+  listingId: number | string,
+): Promise<void> {
   await api.post(`/api/listings/${listingId}/hide`)
 }
 
-export async function activateListing(listingId: number): Promise<void> {
+export async function activateListing(
+  listingId: number | string,
+): Promise<void> {
   await api.post(`/api/listings/${listingId}/activate`)
 }
 
-export async function deleteListing(listingId: number): Promise<void> {
+export async function deleteListing(
+  listingId: number | string,
+): Promise<void> {
   await api.delete(`/api/listings/${listingId}`)
 }
 
