@@ -10,8 +10,11 @@ export function useListingAvailability(
 ) {
   const [busyIntervals, setBusyIntervals] = useState<BusyInterval[]>([])
   const [availabilityLoading, setAvailabilityLoading] = useState(false)
+  const [availabilityError, setAvailabilityError] = useState<string | null>(null)
 
   useEffect(() => {
+    let cancelled = false
+
     async function loadAvailability() {
       const monthStart = new Date(
         visibleMonth.getFullYear(),
@@ -25,6 +28,7 @@ export function useListingAvailability(
       )
 
       setAvailabilityLoading(true)
+      setAvailabilityError(null)
 
       try {
         const data = await getListingAvailability(
@@ -33,19 +37,36 @@ export function useListingAvailability(
           `${toDateValue(nextMonthStart)}T00:00`,
         )
 
+        if (cancelled) {
+          return
+        }
+
         setBusyIntervals(data.busyIntervals)
+        setAvailabilityError(null)
       } catch (error) {
         console.error('Failed to load listing availability:', error)
-        setBusyIntervals([])
+
+        if (cancelled) {
+          return
+        }
+
+        setAvailabilityError('Не удалось загрузить доступность. Попробуйте обновить календарь.')
       } finally {
-        setAvailabilityLoading(false)
+        if (!cancelled) {
+          setAvailabilityLoading(false)
+        }
       }
     }
 
     loadAvailability()
+
+    return () => {
+      cancelled = true
+    }
   }, [listingId, refreshKey, visibleMonth])
 
   return {
+    availabilityError,
     availabilityLoading,
     busyIntervals,
   }

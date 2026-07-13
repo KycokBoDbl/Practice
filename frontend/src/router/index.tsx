@@ -12,6 +12,7 @@ import { BookingInboxPage } from '../pages/BookingInbox/BookingInboxPage'
 import { ProfilePage } from '../pages/Profile/ProfilePage'
 import { SpacePage } from '../pages/Spaces/SpacePage'
 import { ListingPublicationPage } from '../pages/ListingPublication/ListingPublicationPage'
+import { MyListingsPage } from '../pages/MyListings/MyListingsPage'
 
 export const router = createBrowserRouter([
   {
@@ -76,6 +77,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth>
             <BookingDetailPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: 'my-listings',
+        element: (
+          <RequireAuth>
+            <MyListingsPage />
           </RequireAuth>
         ),
       },

@@ -1,11 +1,50 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
+import { BookingCalendar } from '../../components/BookingCalendar/BookingCalendar'
 import { getListing } from '../../api/listings'
 import type { Listing } from '../../types/listing'
 import { getSpaceTypeLabel } from '../../types/spaceType'
 import styles from './SpacePage.module.css'
-import { BookingCalendar } from '../../components/BookingCalendar/BookingCalendar'
+
+const AMENITIES_PREFIXES = ['Удобства: ', 'РЈРґРѕР±СЃС‚РІР°: ']
+
+function splitDescriptionAndAmenities(value: string | null | undefined) {
+  const trimmedValue = value?.trim()
+
+  if (!trimmedValue) {
+    return {
+      description: '',
+      amenities: [] as string[],
+    }
+  }
+
+  const lines = trimmedValue.split(/\r?\n/)
+  const lastLine = lines[lines.length - 1]?.trim()
+  const prefix = AMENITIES_PREFIXES.find((item) => lastLine?.startsWith(item))
+
+  if (!lastLine || !prefix || !lastLine.endsWith('.')) {
+    return {
+      description: trimmedValue,
+      amenities: [] as string[],
+    }
+  }
+
+  const amenities = Array.from(
+    new Set(
+      lastLine
+        .slice(prefix.length, -1)
+        .split(',')
+        .map((amenity) => amenity.trim())
+        .filter(Boolean),
+    ),
+  )
+
+  return {
+    description: lines.slice(0, -1).join('\n').trim(),
+    amenities,
+  }
+}
 
 export function SpacePage() {
   const { id } = useParams()
@@ -13,17 +52,29 @@ export function SpacePage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let cancelled = false
+
     async function loadListing() {
       try {
-        setListing(await getListing(id))
+        const nextListing = await getListing(id)
+
+        if (!cancelled) {
+          setListing(nextListing)
+        }
       } catch (error) {
         console.error('Ошибка при загрузке помещения:', error)
       } finally {
-        setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
 
     loadListing()
+
+    return () => {
+      cancelled = true
+    }
   }, [id])
 
   if (loading) {
@@ -42,7 +93,7 @@ export function SpacePage() {
   }
 
   const imageUrl = listing.imageUrl?.trim()
-  const description = listing.description?.trim()
+  const { amenities, description } = splitDescriptionAndAmenities(listing.description)
 
   return (
     <main className={styles.page}>
@@ -95,26 +146,41 @@ export function SpacePage() {
               </div>
             </div>
 
-            <h2>Описание</h2>
-            <p
-              className={`${styles.description} ${description ? '' : styles.descriptionMuted}`}
-            >
-              {description || 'Описание пока не добавлено.'}
-            </p>
+            <section className={styles.detailsSection}>
+              <h2>Описание</h2>
+              <p
+                className={`${styles.description} ${description ? '' : styles.descriptionMuted}`}
+              >
+                {description || 'Описание пока не добавлено.'}
+              </p>
+            </section>
+
+            {amenities.length > 0 && (
+              <section className={styles.detailsSection}>
+                <h2>Удобства</h2>
+                <div className={styles.amenities}>
+                  {amenities.map((amenity) => (
+                    <span key={amenity} className={styles.amenityChip}>
+                      {amenity}
+                    </span>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         </section>
 
-        <section className={styles.calendarSection}>
-            <BookingCalendar
-              listingId={listing.id}
-              pricePerHour={listing.pricePerHour}
-              mode="preview"
-            />
+        <aside className={styles.calendarSection}>
+          <BookingCalendar
+            listingId={listing.id}
+            pricePerHour={listing.pricePerHour}
+            mode="preview"
+          />
 
-            <Link to={`/booking/${listing.id}`} className={styles.button}>
-              Забронировать
-            </Link>
-        </section>
+          <Link to={`/booking/${listing.id}`} className={styles.button}>
+            Забронировать
+          </Link>
+        </aside>
       </div>
     </main>
   )

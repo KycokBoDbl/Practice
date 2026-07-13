@@ -10,6 +10,9 @@ export interface Listing {
   capacity: number
   spaceType: SpaceType
   imageUrl: string | null
+  ownerOrganizationName: string | null
+  latitude: number | null
+  longitude: number | null
 }
 
 export interface CreateListingRequest {
@@ -23,8 +26,21 @@ export interface CreateListingRequest {
   imageUrl: string | null
 }
 
+export type UpdateListingRequest = CreateListingRequest
+
+export type ListingLifecycleStatus = 'PUBLISHED' | 'ARCHIVED'
+
+export interface OwnedListing extends Listing {
+  status: ListingLifecycleStatus
+}
+
 export type ListingPublicationErrorKind =
   | 'validation'
   | 'unauthorized'
   | 'forbidden'
   | 'unknown'
+
+export type ListingManagementErrorKind =
+  | ListingPublicationErrorKind
+  | 'notFound'
+  | 'conflict'

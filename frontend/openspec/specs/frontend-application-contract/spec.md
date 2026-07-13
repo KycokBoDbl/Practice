@@ -88,6 +88,32 @@ The frontend SHALL be able to show authenticated booking status and history retu
 - **WHEN** booking history is shown
 - **THEN** the frontend SHALL consume `GET /api/bookings/{bookingId}/history` as an append-only transition list
 
+### Requirement: Header exposes booking inbox navigation
+The frontend SHALL expose a Header navigation entry to the booking inbox for authenticated users.
+
+#### Scenario: Authenticated user sees bookings navigation
+- **WHEN** an authenticated user sees the Header
+- **THEN** the Header SHALL include a navigation entry to the booking inbox route
+
+#### Scenario: Guest does not see protected bookings navigation
+- **WHEN** a guest sees the Header
+- **THEN** the Header SHALL not expose protected booking inbox data and SHALL keep existing login/register navigation
+
+#### Scenario: Booking inbox navigation is active
+- **WHEN** the user is on the booking inbox route
+- **THEN** the Header SHALL mark the booking inbox navigation entry as active using the existing active-link behavior
+
+### Requirement: Booking inbox route is protected
+The frontend SHALL protect the booking inbox route using the existing authentication guard.
+
+#### Scenario: Guest navigates directly to inbox
+- **WHEN** a guest opens the booking inbox route directly
+- **THEN** the frontend SHALL redirect through the existing login flow rather than calling protected booking APIs
+
+#### Scenario: Authenticated user navigates directly to inbox
+- **WHEN** an authenticated user opens the booking inbox route directly
+- **THEN** the frontend SHALL render the booking inbox page within the main layout
+
 ### Requirement: Frontend booking flow is backend-backed
 The frontend SHALL complete the marketplace booking flow by submitting selected booking data to the existing backend booking workflow.
 
@@ -121,3 +147,29 @@ The frontend SHALL map backend booking errors into user-visible states using sha
 #### Scenario: Booking request conflicts
 - **WHEN** the backend returns `409` for a booking endpoint
 - **THEN** the frontend SHALL show that the booking state or calendar slot changed and prompt the user to choose an updated action
+
+### Requirement: Application routes preserve behavior during stabilization
+The frontend SHALL preserve existing application routes, navigation labels, and user workflows while stabilizing internal implementation boundaries.
+
+#### Scenario: Existing route is opened
+- **WHEN** a user opens any existing public or protected frontend route
+- **THEN** the route path and intended page workflow SHALL remain available after stabilization
+
+#### Scenario: User-visible text is corrected
+- **WHEN** mojibake user-facing strings are corrected
+- **THEN** the resulting text SHALL convey the same existing labels, messages, and actions in readable form rather than introducing redesigned copy
+
+#### Scenario: Backend-backed workflow is used
+- **WHEN** catalog, listing publication, listing management, booking calendar, booking inbox, or booking detail workflows call the backend
+- **THEN** they SHALL continue to use the existing frontend API functions and backend API contracts unless a separate OpenSpec change changes that contract
+
+### Requirement: Stabilization excludes backend-dependent listing detail redesign
+The frontend SHALL NOT introduce a new listing-detail API assumption as part of this stabilization change.
+
+#### Scenario: Listing detail is loaded
+- **WHEN** listing detail or booking routes resolve a listing by id
+- **THEN** this change SHALL NOT require or assume `GET /api/listings/{listingId}`
+
+#### Scenario: Listing API boundary is considered
+- **WHEN** implementation touches frontend route decomposition
+- **THEN** it SHALL NOT change the current `getListing()` behavior or `src/api/listings.ts` as part of this change

@@ -1,7 +1,5 @@
 import { useMemo, useState } from 'react'
 
-import { durations, timeSlots } from './constants'
-import styles from './BookingCalendar.module.css'
 import type { CreateBookingRequest } from '../../types/booking'
 import {
   BookingSummary,
@@ -9,6 +7,8 @@ import {
   MonthCard,
   TimeSlotsSection,
 } from './BookingCalendarSections'
+import styles from './BookingCalendar.module.css'
+import { durations, timeSlots } from './constants'
 import { useListingAvailability } from './useListingAvailability'
 import {
   getDateTimeValue,
@@ -53,7 +53,7 @@ export function BookingCalendar({
   const [selectedDate, setSelectedDate] = useState(toDateValue(today))
   const [selectedTime, setSelectedTime] = useState('09:00')
   const [duration, setDuration] = useState(2)
-  const { availabilityLoading, busyIntervals } = useListingAvailability(
+  const { availabilityError, availabilityLoading, busyIntervals } = useListingAvailability(
     listingId,
     visibleMonth,
     availabilityRefreshKey,
@@ -134,7 +134,9 @@ export function BookingCalendar({
   }
 
   return (
-    <section className={styles.calendar}>
+    <section
+      className={`${styles.calendar} ${mode === 'preview' ? styles.previewCalendar : ''}`}
+    >
       <div className={styles.header}>
         <div>
           <h2>
@@ -143,7 +145,7 @@ export function BookingCalendar({
               : 'Выберите дату и время'}
           </h2>
           <p>
-            Зеленые дни и часы доступны, желтые дни уже имеют отдельные записи,
+            Зеленые дни и часы доступны, желтые дни уже имеют отдельные брони,
             красные полностью заняты.
           </p>
         </div>
@@ -172,10 +174,12 @@ export function BookingCalendar({
         onPreviousMonth={goToPreviousMonth}
         onSelectDate={setSelectedDate}
         selectedDate={selectedDate}
+        showDayLabels={mode === 'booking'}
         visibleMonth={visibleMonth}
       />
 
       <TimeSlotsSection
+        availabilityError={availabilityError}
         availabilityLoading={availabilityLoading}
         busyIntervals={busyIntervals}
         mode={mode}

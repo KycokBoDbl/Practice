@@ -111,7 +111,9 @@ export function BookingPage() {
       }
 
       if (parsedError.kind === 'unauthorized') {
-        setBookingMessage('Сессия истекла. Войдите в аккаунт арендатора и повторите бронирование.')
+        setBookingMessage(
+          'Сессия истекла. Войдите в аккаунт арендатора и повторите бронирование.',
+        )
         return
       }
 
@@ -121,13 +123,25 @@ export function BookingPage() {
       }
 
       if (parsedError.kind === 'notFound') {
-        setBookingMessage('Помещение или заявка недоступны. Проверьте страницу помещения и попробуйте снова.')
+        setBookingMessage(
+          'Помещение или заявка недоступны. Проверьте страницу помещения и попробуйте снова.',
+        )
+        return
+      }
+
+      if (parsedError.kind === 'duplicateApplicationConflict') {
+        setAvailabilityRefreshKey((currentKey) => currentKey + 1)
+        setBookingMessage(
+          'У вас уже есть заявка на это помещение на выбранную дату. Выберите другой день или проверьте текущие заявки.',
+        )
         return
       }
 
       if (parsedError.kind === 'conflict') {
         setAvailabilityRefreshKey((currentKey) => currentKey + 1)
-        setBookingMessage('Выбранный слот уже недоступен. Мы обновили календарь, выберите другое время.')
+        setBookingMessage(
+          'Выбранный слот уже недоступен. Мы обновили календарь, выберите другое время.',
+        )
         return
       }
 
