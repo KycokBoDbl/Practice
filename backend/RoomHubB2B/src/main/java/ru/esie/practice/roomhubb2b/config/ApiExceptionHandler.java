@@ -16,6 +16,8 @@ import ru.esie.practice.roomhubb2b.booking.BookingNotFoundException;
 import ru.esie.practice.roomhubb2b.listing.ListingConflictException;
 import ru.esie.practice.roomhubb2b.listing.ListingForbiddenException;
 import ru.esie.practice.roomhubb2b.listing.ListingNotFoundException;
+import ru.esie.practice.roomhubb2b.listing.geocoding.AddressNotGeocodedException;
+import ru.esie.practice.roomhubb2b.listing.geocoding.GeocodingProviderException;
 import tools.jackson.databind.exc.InvalidFormatException;
 
 import java.net.URI;
@@ -67,6 +69,16 @@ public class ApiExceptionHandler {
     @ExceptionHandler(ListingConflictException.class)
     ProblemDetail handleListingConflict(ListingConflictException exception, HttpServletRequest request) {
         return problem(HttpStatus.CONFLICT, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(AddressNotGeocodedException.class)
+    ProblemDetail handleAddressNotGeocoded(AddressNotGeocodedException exception, HttpServletRequest request) {
+        return problem(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(GeocodingProviderException.class)
+    ProblemDetail handleGeocodingProvider(GeocodingProviderException exception, HttpServletRequest request) {
+        return problem(HttpStatus.BAD_GATEWAY, exception.getMessage(), request);
     }
 
     @ExceptionHandler(BookingNotFoundException.class)

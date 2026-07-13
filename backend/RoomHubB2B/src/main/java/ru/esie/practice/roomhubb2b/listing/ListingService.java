@@ -13,6 +13,8 @@ import ru.esie.practice.roomhubb2b.listing.dto.CreateListingRequestDto;
 import ru.esie.practice.roomhubb2b.listing.dto.ListingResponseDto;
 import ru.esie.practice.roomhubb2b.listing.dto.OwnedListingResponseDto;
 import ru.esie.practice.roomhubb2b.listing.dto.UpdateListingRequestDto;
+import ru.esie.practice.roomhubb2b.listing.geocoding.GeoCoordinates;
+import ru.esie.practice.roomhubb2b.listing.geocoding.GeocodingService;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -27,17 +29,20 @@ public class ListingService {
     private final ListingRepository listingRepository;
     private final OrganizationRepository organizationRepository;
     private final BookingRepository bookingRepository;
+    private final GeocodingService geocodingService;
     private final Clock clock;
 
     public ListingService(
             ListingRepository listingRepository,
             OrganizationRepository organizationRepository,
             BookingRepository bookingRepository,
+            GeocodingService geocodingService,
             Clock clock
     ) {
         this.listingRepository = listingRepository;
         this.organizationRepository = organizationRepository;
         this.bookingRepository = bookingRepository;
+        this.geocodingService = geocodingService;
         this.clock = clock;
     }
 
@@ -68,6 +73,7 @@ public class ListingService {
         }
         OrganizationEntity owner = organizationRepository.findById(actor.organizationId())
                 .orElseThrow(() -> new ListingForbiddenException("Landlord organization not found"));
+        GeoCoordinates coordinates = geocodingService.geocode(request.city(), request.address());
         LocalDateTime createdAt = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
         ListingEntity listing = ListingEntity.published(
                 request.title(),
@@ -81,6 +87,7 @@ public class ListingService {
                 createdAt,
                 owner
         );
+        listing.updateCoordinates(coordinates.latitude(), coordinates.longitude());
         ListingEntity saved = listingRepository.save(listing);
         log.info("Listing {} published by organization {}", saved.getId(), actor.organizationId());
         return toResponseDto(saved);
@@ -89,6 +96,9 @@ public class ListingService {
     @Transactional
     public ListingResponseDto update(ListingActor actor, Long listingId, UpdateListingRequestDto request) {
         ListingEntity listing = loadOwnedListing(actor, listingId);
+        GeoCoordinates coordinates = listing.hasSameAddress(request.city(), request.address())
+                ? null
+                : geocodingService.geocode(request.city(), request.address());
         listing.updateDetails(
                 request.title(),
                 request.description(),
@@ -99,6 +109,9 @@ public class ListingService {
                 request.spaceType(),
                 request.imageUrl()
         );
+        if (coordinates != null) {
+            listing.updateCoordinates(coordinates.latitude(), coordinates.longitude());
+        }
         log.info("Listing {} updated by organization {}", listing.getId(), actor.organizationId());
         return toResponseDto(listing);
     }
@@ -165,7 +178,9 @@ public class ListingService {
                 listing.getImageUrl(),
                 listing.getDescription(),
                 listing.getAddress(),
-                owner == null ? null : owner.getLegalName()
+                owner == null ? null : owner.getLegalName(),
+                listing.getLatitude(),
+                listing.getLongitude()
         );
     }
 
@@ -182,6 +197,8 @@ public class ListingService {
                 listing.getDescription(),
                 listing.getAddress(),
                 owner == null ? null : owner.getLegalName(),
+                listing.getLatitude(),
+                listing.getLongitude(),
                 listing.getStatus()
         );
     }

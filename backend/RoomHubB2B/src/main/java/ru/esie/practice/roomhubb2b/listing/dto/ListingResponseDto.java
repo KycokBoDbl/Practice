@@ -18,6 +18,10 @@ public record ListingResponseDto(
         @Schema(description = "Detailed listing description", nullable = true) String description,
         @Schema(description = "Street address", example = "Lenina Avenue, 10") String address,
         @Schema(description = "Owner organization display name", example = "Landlord LLC", nullable = true)
-        String ownerOrganizationName
+        String ownerOrganizationName,
+        @Schema(description = "Geocoded latitude for map marker placement", example = "53.348114", nullable = true)
+        BigDecimal latitude,
+        @Schema(description = "Geocoded longitude for map marker placement", example = "83.779836", nullable = true)
+        BigDecimal longitude
 ) {
 }

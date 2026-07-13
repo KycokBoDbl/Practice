@@ -23,6 +23,7 @@ $env:SPRING_DATASOURCE_URL = "jdbc:postgresql://localhost:5432/roomhub_b2b"
 $env:SPRING_DATASOURCE_USERNAME = "postgres"
 $env:SPRING_DATASOURCE_PASSWORD = "postgres"
 $env:ROOMHUB_AUTH_TOKEN_SECRET = "replace-with-at-least-32-random-bytes"
+$env:ROOMHUB_GEOCODING_YANDEX_API_KEY = "replace-with-yandex-geocoder-api-key"
 ```
 
 ```bash
@@ -30,9 +31,12 @@ export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/roomhub_b2b
 export SPRING_DATASOURCE_USERNAME=postgres
 export SPRING_DATASOURCE_PASSWORD=postgres
 export ROOMHUB_AUTH_TOKEN_SECRET=replace-with-at-least-32-random-bytes
+export ROOMHUB_GEOCODING_YANDEX_API_KEY=replace-with-yandex-geocoder-api-key
 ```
 
 ## Запуск
+
+`ROOMHUB_GEOCODING_YANDEX_API_KEY` is required and supplies the Yandex Geocoder API key used to geocode listing `city + address` on create and address edit. Set it from secret storage in production and shared environments.
 
 Windows:
 

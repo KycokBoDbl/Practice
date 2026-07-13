@@ -5,6 +5,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -21,6 +25,9 @@ import ru.esie.practice.roomhubb2b.auth.UserRole;
 import ru.esie.practice.roomhubb2b.booking.BookingEntity;
 import ru.esie.practice.roomhubb2b.booking.BookingRepository;
 import ru.esie.practice.roomhubb2b.config.TokenProperties;
+import ru.esie.practice.roomhubb2b.listing.geocoding.AddressNotGeocodedException;
+import ru.esie.practice.roomhubb2b.listing.geocoding.GeoCoordinates;
+import ru.esie.practice.roomhubb2b.listing.geocoding.GeocodingService;
 import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
@@ -42,6 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = "roomhub.booking.scheduler-delay=PT24H")
 @AutoConfigureMockMvc
 @Transactional
+@Import(ListingPublicationApiIntegrationTest.GeocodingTestConfig.class)
 class ListingPublicationApiIntegrationTest {
 
     private static final AtomicInteger SEQUENCE = new AtomicInteger(5000);
@@ -98,11 +106,13 @@ class ListingPublicationApiIntegrationTest {
                         .content(validRequest(tenant.getId())))
                 .andExpect(status().isCreated())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.length()").value(10))
+                .andExpect(jsonPath("$.length()").value(12))
                 .andExpect(jsonPath("$.title").value("Publication meeting room"))
                 .andExpect(jsonPath("$.pricePerHour").value(2500.00))
                 .andExpect(jsonPath("$.spaceType").value("MEETING_ROOM"))
                 .andExpect(jsonPath("$.ownerOrganizationName").value(landlord.getLegalName()))
+                .andExpect(jsonPath("$.latitude").value(53.348114))
+                .andExpect(jsonPath("$.longitude").value(83.779836))
                 .andExpect(jsonPath("$.ownerOrganizationId").doesNotExist())
                 .andReturn();
 
@@ -114,17 +124,23 @@ class ListingPublicationApiIntegrationTest {
         assertThat(listing.getCreatedAt()).isNotNull();
 
         Map<String, Object> stored = jdbcTemplate.queryForMap(
-                "SELECT owner_organization_id, status, created_at FROM listings WHERE id = ?",
+                "SELECT owner_organization_id, status, created_at, latitude, longitude FROM listings WHERE id = ?",
                 listingId
         );
         assertThat(stored.get("owner_organization_id")).isEqualTo(landlord.getId());
         assertThat(stored.get("status")).isEqualTo("PUBLISHED");
         assertThat(stored.get("created_at")).isNotNull();
+        assertThat(stored.get("latitude")).isEqualTo(new BigDecimal("53.348114"));
+        assertThat(stored.get("longitude")).isEqualTo(new BigDecimal("83.779836"));
 
         mockMvc.perform(get("/api/listings"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.id == " + listingId + ")].title")
-                        .value("Publication meeting room"));
+                        .value("Publication meeting room"))
+                .andExpect(jsonPath("$[?(@.id == " + listingId + ")].latitude")
+                        .value(53.348114))
+                .andExpect(jsonPath("$[?(@.id == " + listingId + ")].longitude")
+                        .value(83.779836));
     }
 
     @Test
@@ -145,6 +161,30 @@ class ListingPublicationApiIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.description").isEmpty())
                 .andExpect(jsonPath("$.imageUrl").isEmpty());
+    }
+
+    @Test
+    void rejectsUnresolvablePublicationAddressWithoutInserting() throws Exception {
+        long count = listingRepository.count();
+
+        mockMvc.perform(post("/api/listings")
+                        .header("Authorization", "Bearer " + landlordToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "Unresolvable listing",
+                                  "city": "Barnaul",
+                                  "address": "Unresolvable address",
+                                  "pricePerHour": 1.00,
+                                  "capacity": 1,
+                                  "spaceType": "CLASSROOM"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(400));
+
+        assertThat(listingRepository.count()).isEqualTo(count);
     }
 
     @Test
@@ -244,6 +284,8 @@ class ListingPublicationApiIntegrationTest {
                 .andExpect(jsonPath("$.title").value("Updated management room"))
                 .andExpect(jsonPath("$.city").value("Novosibirsk"))
                 .andExpect(jsonPath("$.ownerOrganizationName").value(landlord.getLegalName()))
+                .andExpect(jsonPath("$.latitude").value(55.030204))
+                .andExpect(jsonPath("$.longitude").value(82.920430))
                 .andExpect(jsonPath("$.ownerOrganizationId").doesNotExist());
 
         ListingEntity updated = listingRepository.findById(listing.getId()).orElseThrow();
@@ -255,6 +297,8 @@ class ListingPublicationApiIntegrationTest {
         assertThat(updated.getCapacity()).isEqualTo(24);
         assertThat(updated.getSpaceType()).isEqualTo(SpaceType.CONFERENCE_HALL);
         assertThat(updated.getImageUrl()).isNull();
+        assertThat(updated.getLatitude()).isEqualByComparingTo("55.030204");
+        assertThat(updated.getLongitude()).isEqualByComparingTo("82.920430");
         assertThat(updated.getOwnerOrganization().getId()).isEqualTo(landlord.getId());
         assertThat(updated.getStatus()).isEqualTo(ListingStatus.PUBLISHED);
         assertThat(updated.getCreatedAt()).isEqualTo(createdAt);
@@ -277,6 +321,10 @@ class ListingPublicationApiIntegrationTest {
                         .value("Owned visible room"))
                 .andExpect(jsonPath("$[?(@.id == " + published.getId() + ")].status")
                         .value("PUBLISHED"))
+                .andExpect(jsonPath("$[?(@.id == " + published.getId() + ")].latitude")
+                        .value(53.348114))
+                .andExpect(jsonPath("$[?(@.id == " + published.getId() + ")].longitude")
+                        .value(83.779836))
                 .andExpect(jsonPath("$[?(@.id == " + hidden.getId() + ")].title")
                         .value("Owned hidden room"))
                 .andExpect(jsonPath("$[?(@.id == " + hidden.getId() + ")].status")
@@ -474,7 +522,9 @@ class ListingPublicationApiIntegrationTest {
                   "imageUrl": "https://example.com/listing.jpg",
                   "ownerOrganizationId": %d,
                   "status": "ARCHIVED",
-                  "createdAt": "2000-01-01T00:00:00"
+                  "createdAt": "2000-01-01T00:00:00",
+                  "latitude": 1.000000,
+                  "longitude": 2.000000
                 }
                 """.formatted(suppliedOwnerId);
     }
@@ -492,7 +542,9 @@ class ListingPublicationApiIntegrationTest {
                   "imageUrl": null,
                   "ownerOrganizationId": %d,
                   "status": "ARCHIVED",
-                  "createdAt": "2000-01-01T00:00:00"
+                  "createdAt": "2000-01-01T00:00:00",
+                  "latitude": 1.000000,
+                  "longitude": 2.000000
                 }
                 """.formatted(suppliedOwnerId);
     }
@@ -508,7 +560,7 @@ class ListingPublicationApiIntegrationTest {
     }
 
     private ListingEntity listing(String title, OrganizationEntity owner) {
-        return listingRepository.saveAndFlush(ListingEntity.published(
+        ListingEntity listing = ListingEntity.published(
                 title,
                 "Projector and whiteboard",
                 "Barnaul",
@@ -519,7 +571,9 @@ class ListingPublicationApiIntegrationTest {
                 "https://example.com/listing.jpg",
                 LocalDateTime.of(2026, 7, 8, 10, 0),
                 owner
-        ));
+        );
+        listing.updateCoordinates(new BigDecimal("53.348114"), new BigDecimal("83.779836"));
+        return listingRepository.saveAndFlush(listing);
     }
 
     private OrganizationEntity organization(String label) {
@@ -544,5 +598,23 @@ class ListingPublicationApiIntegrationTest {
                 JwsHeader.with(MacAlgorithm.HS256).build(),
                 claims
         )).getTokenValue();
+    }
+
+    @TestConfiguration
+    static class GeocodingTestConfig {
+
+        @Bean
+        @Primary
+        GeocodingService geocodingService() {
+            return (city, address) -> {
+                if (address.contains("Unresolvable")) {
+                    throw new AddressNotGeocodedException("Listing address could not be geocoded");
+                }
+                if ("Novosibirsk".equals(city)) {
+                    return new GeoCoordinates(new BigDecimal("55.030204"), new BigDecimal("82.920430"));
+                }
+                return new GeoCoordinates(new BigDecimal("53.348114"), new BigDecimal("83.779836"));
+            };
+        }
     }
 }

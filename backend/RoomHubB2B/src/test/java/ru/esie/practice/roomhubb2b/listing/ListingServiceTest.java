@@ -12,6 +12,10 @@ import ru.esie.practice.roomhubb2b.booking.BookingRepository;
 import ru.esie.practice.roomhubb2b.listing.dto.CreateListingRequestDto;
 import ru.esie.practice.roomhubb2b.listing.dto.ListingResponseDto;
 import ru.esie.practice.roomhubb2b.listing.dto.UpdateListingRequestDto;
+import ru.esie.practice.roomhubb2b.listing.geocoding.AddressNotGeocodedException;
+import ru.esie.practice.roomhubb2b.listing.geocoding.GeoCoordinates;
+import ru.esie.practice.roomhubb2b.listing.geocoding.GeocodingProviderException;
+import ru.esie.practice.roomhubb2b.listing.geocoding.GeocodingService;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -23,6 +27,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.doThrow;
@@ -36,6 +41,7 @@ class ListingServiceTest {
     private ListingRepository listingRepository;
     private OrganizationRepository organizationRepository;
     private BookingRepository bookingRepository;
+    private GeocodingService geocodingService;
     private ListingService service;
 
     @BeforeEach
@@ -43,10 +49,13 @@ class ListingServiceTest {
         listingRepository = mock(ListingRepository.class);
         organizationRepository = mock(OrganizationRepository.class);
         bookingRepository = mock(BookingRepository.class);
+        geocodingService = mock(GeocodingService.class);
+        when(geocodingService.geocode(any(), any())).thenReturn(coordinates("53.348114", "83.779836"));
         service = new ListingService(
                 listingRepository,
                 organizationRepository,
                 bookingRepository,
+                geocodingService,
                 Clock.fixed(NOW, ZoneOffset.UTC)
         );
     }
@@ -69,9 +78,27 @@ class ListingServiceTest {
         assertThat(saved.getOwnerOrganization()).isSameAs(owner);
         assertThat(saved.getStatus()).isEqualTo(ListingStatus.PUBLISHED);
         assertThat(saved.getCreatedAt()).isEqualTo(LocalDateTime.ofInstant(NOW, ZoneOffset.UTC));
+        assertThat(saved.getLatitude()).isEqualByComparingTo("53.348114");
+        assertThat(saved.getLongitude()).isEqualByComparingTo("83.779836");
         assertThat(response.title()).isEqualTo("Meeting room");
         assertThat(response.pricePerHour()).isEqualByComparingTo("2500.00");
         assertThat(response.ownerOrganizationName()).isEqualTo("Landlord LLC");
+        assertThat(response.latitude()).isEqualByComparingTo("53.348114");
+        assertThat(response.longitude()).isEqualByComparingTo("83.779836");
+        verify(geocodingService).geocode("Barnaul", "Lenina Avenue, 10");
+    }
+
+    @Test
+    void rejectsPublicationWhenAddressCannotBeGeocodedWithoutSaving() {
+        OrganizationEntity owner = new OrganizationEntity("Landlord LLC", "7700000001");
+        when(organizationRepository.findById(17L)).thenReturn(Optional.of(owner));
+        when(geocodingService.geocode(any(), any()))
+                .thenThrow(new AddressNotGeocodedException("Listing address could not be geocoded"));
+
+        assertThatThrownBy(() -> service.publish(new ListingActor(17L, UserRole.LANDLORD), request()))
+                .isInstanceOf(AddressNotGeocodedException.class);
+
+        verify(listingRepository, never()).save(any());
     }
 
     @Test
@@ -90,6 +117,8 @@ class ListingServiceTest {
         ListingEntity listing = ownedListing();
         LocalDateTime createdAt = listing.getCreatedAt();
         OrganizationEntity owner = listing.getOwnerOrganization();
+        when(geocodingService.geocode("Novosibirsk", "Krasny Avenue, 1"))
+                .thenReturn(coordinates("55.030204", "82.920430"));
         when(listingRepository.findByIdAndOwnerOrganizationId(99L, 17L))
                 .thenReturn(Optional.of(listing));
 
@@ -107,11 +136,55 @@ class ListingServiceTest {
         assertThat(listing.getCapacity()).isEqualTo(24);
         assertThat(listing.getSpaceType()).isEqualTo(SpaceType.CONFERENCE_HALL);
         assertThat(listing.getImageUrl()).isNull();
+        assertThat(listing.getLatitude()).isEqualByComparingTo("55.030204");
+        assertThat(listing.getLongitude()).isEqualByComparingTo("82.920430");
         assertThat(listing.getStatus()).isEqualTo(ListingStatus.PUBLISHED);
         assertThat(listing.getCreatedAt()).isEqualTo(createdAt);
         assertThat(listing.getOwnerOrganization()).isSameAs(owner);
         assertThat(response.title()).isEqualTo("Updated room");
         assertThat(response.ownerOrganizationName()).isEqualTo("Landlord LLC");
+        assertThat(response.latitude()).isEqualByComparingTo("55.030204");
+        assertThat(response.longitude()).isEqualByComparingTo("82.920430");
+        verify(geocodingService).geocode("Novosibirsk", "Krasny Avenue, 1");
+    }
+
+    @Test
+    void keepsCoordinatesWhenUpdateDoesNotChangeAddress() {
+        ListingEntity listing = ownedListing();
+        when(listingRepository.findByIdAndOwnerOrganizationId(99L, 17L))
+                .thenReturn(Optional.of(listing));
+
+        service.update(
+                new ListingActor(17L, UserRole.LANDLORD),
+                99L,
+                sameAddressUpdateRequest()
+        );
+
+        assertThat(listing.getTitle()).isEqualTo("Updated room");
+        assertThat(listing.getLatitude()).isEqualByComparingTo("53.348114");
+        assertThat(listing.getLongitude()).isEqualByComparingTo("83.779836");
+        verify(geocodingService, never()).geocode(eq("Barnaul"), eq("Lenina Avenue, 10"));
+    }
+
+    @Test
+    void leavesListingUnchangedWhenAddressUpdateGeocodingFails() {
+        ListingEntity listing = ownedListing();
+        when(listingRepository.findByIdAndOwnerOrganizationId(99L, 17L))
+                .thenReturn(Optional.of(listing));
+        when(geocodingService.geocode("Novosibirsk", "Krasny Avenue, 1"))
+                .thenThrow(new GeocodingProviderException("Yandex geocoder is unavailable"));
+
+        assertThatThrownBy(() -> service.update(
+                new ListingActor(17L, UserRole.LANDLORD),
+                99L,
+                updateRequest()
+        )).isInstanceOf(GeocodingProviderException.class);
+
+        assertThat(listing.getTitle()).isEqualTo("Meeting room");
+        assertThat(listing.getCity()).isEqualTo("Barnaul");
+        assertThat(listing.getAddress()).isEqualTo("Lenina Avenue, 10");
+        assertThat(listing.getLatitude()).isEqualByComparingTo("53.348114");
+        assertThat(listing.getLongitude()).isEqualByComparingTo("83.779836");
     }
 
     @Test
@@ -251,10 +324,23 @@ class ListingServiceTest {
         );
     }
 
+    private UpdateListingRequestDto sameAddressUpdateRequest() {
+        return new UpdateListingRequestDto(
+                "Updated room",
+                null,
+                "Barnaul",
+                "Lenina Avenue, 10",
+                new BigDecimal("3000.00"),
+                24,
+                SpaceType.CONFERENCE_HALL,
+                null
+        );
+    }
+
     private ListingEntity ownedListing() {
         OrganizationEntity owner = new OrganizationEntity("Landlord LLC", "7700000001");
         ReflectionTestUtils.setField(owner, "id", 17L);
-        return ListingEntity.published(
+        ListingEntity listing = ListingEntity.published(
                 "Meeting room",
                 "Description",
                 "Barnaul",
@@ -266,5 +352,11 @@ class ListingServiceTest {
                 LocalDateTime.ofInstant(NOW, ZoneOffset.UTC),
                 owner
         );
+        listing.updateCoordinates(new BigDecimal("53.348114"), new BigDecimal("83.779836"));
+        return listing;
+    }
+
+    private static GeoCoordinates coordinates(String latitude, String longitude) {
+        return new GeoCoordinates(new BigDecimal(latitude), new BigDecimal(longitude));
     }
 }
