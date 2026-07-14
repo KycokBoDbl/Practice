@@ -10,7 +10,8 @@ PowerShell:
 
 ```powershell
 $env:ROOMHUB_AUTH_TOKEN_SECRET = "replace-with-at-least-32-random-bytes"
-$env:ROOMHUB_GEOCODING_YANDEX_API_KEY = "<yandex-geocoder-key>"
+$env:ROOMHUB_GEOCODING_YANDEX_API_KEY = "replace-with-yandex-geocoder-key"
+$env:ROOMHUB_AI_GIGACHAT_AUTHORIZATION_KEY = "replace-with-gigachat-authorization-key"
 docker compose up --build
 ```
 
@@ -18,7 +19,8 @@ Linux/macOS:
 
 ```bash
 export ROOMHUB_AUTH_TOKEN_SECRET=replace-with-at-least-32-random-bytes
-export ROOMHUB_GEOCODING_YANDEX_API_KEY=<yandex-geocoder-key>
+export ROOMHUB_GEOCODING_YANDEX_API_KEY=replace-with-yandex-geocoder-key
+export ROOMHUB_AI_GIGACHAT_AUTHORIZATION_KEY=replace-with-gigachat-authorization-key
 docker compose up --build
 ```
 
