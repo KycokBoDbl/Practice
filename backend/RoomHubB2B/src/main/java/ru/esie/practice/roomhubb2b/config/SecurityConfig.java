@@ -23,6 +23,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
+import ru.esie.practice.roomhubb2b.listing.ai.GigaChatProperties;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -31,7 +32,12 @@ import java.time.Clock;
 import java.util.List;
 
 @Configuration
-@EnableConfigurationProperties({TokenProperties.class, BookingProperties.class, YandexGeocodingProperties.class})
+@EnableConfigurationProperties({
+        TokenProperties.class,
+        BookingProperties.class,
+        YandexGeocodingProperties.class,
+        GigaChatProperties.class
+})
 @EnableMethodSecurity
 public class SecurityConfig {
 
@@ -87,6 +93,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/listings/ai-search").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/listings", "/api/listings/*/availability").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/openapi").permitAll()
                         .requestMatchers("/error").permitAll()

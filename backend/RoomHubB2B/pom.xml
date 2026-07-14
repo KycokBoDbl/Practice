@@ -112,6 +112,7 @@
                     <systemPropertyVariables>
                         <roomhub.auth.token.secret>roomhub-test-signing-secret-32-bytes-minimum</roomhub.auth.token.secret>
                         <roomhub.geocoding.yandex.api-key>roomhub-test-yandex-geocoder-key</roomhub.geocoding.yandex.api-key>
+                        <roomhub.ai.gigachat.authorization-key>roomhub-test-gigachat-authorization-key</roomhub.ai.gigachat.authorization-key>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>

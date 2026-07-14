@@ -200,6 +200,39 @@ class OpenApiContractTests {
     }
 
     @Test
+    void exposesAiListingSearchContract() throws Exception {
+        String operation = "$['paths']['/api/listings/ai-search']['post']";
+
+        mockMvc.perform(get("/api/openapi").accept("application/json"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(operation + ".operationId").value("searchListingsWithAi"))
+                .andExpect(jsonPath(operation + ".security").doesNotExist())
+                .andExpect(jsonPath(operation + ".requestBody.required").value(true))
+                .andExpect(jsonPath(operation + ".requestBody.content['application/json'].schema['$ref']")
+                        .value("#/components/schemas/AiListingSearchRequestDto"))
+                .andExpect(jsonPath(operation + ".responses['200'].content['application/json'].schema.type")
+                        .value("array"))
+                .andExpect(jsonPath(operation + ".responses['200'].content['application/json'].schema.items['$ref']")
+                        .value("#/components/schemas/ListingResponseDto"))
+                .andExpect(jsonPath(operation + ".responses['400'].content['application/problem+json'].schema['$ref']")
+                        .value("#/components/schemas/ProblemDetail"))
+                .andExpect(jsonPath(operation + ".responses['502'].content['application/problem+json'].schema['$ref']")
+                        .value("#/components/schemas/ProblemDetail"))
+                .andExpect(jsonPath("$.components.schemas.AiListingSearchRequestDto.required")
+                        .value(org.hamcrest.Matchers.contains("prompt")))
+                .andExpect(jsonPath("$.components.schemas.AiListingSearchRequestDto.properties.prompt").exists())
+                .andExpect(jsonPath("$.components.schemas.AiListingSearchRequestDto.properties.prompt.maxLength")
+                        .value(1000))
+                .andExpect(jsonPath("$.components.schemas.AiListingSearchRequestDto.properties.authorizationKey")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.components.schemas.AiListingSearchRequestDto.properties.accessToken")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.components.schemas.AiListingSearchRequestDto.properties.spaceType")
+                        .doesNotExist())
+                .andExpect(jsonPath("$['paths']['/api/listings']['get'].security").doesNotExist());
+    }
+
+    @Test
     void exposesHourlyListingAvailabilityInOpenApiContract() throws Exception {
         String operation = "$['paths']['/api/listings/{listingId}/availability']['get']";
 

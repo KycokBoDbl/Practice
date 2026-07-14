@@ -13,7 +13,7 @@ Backend SHALL expose a valid OpenAPI 3 JSON document through `GET /api/openapi` 
 - **AND** the document metadata identifies `RoomHub B2B API`
 
 ### Requirement: Public API operation coverage
-The OpenAPI document SHALL include public RoomHub operations under `/api/**` and SHALL describe their request parameters, response status codes and response schemas without changing runtime business responses.
+The OpenAPI document SHALL include public RoomHub operations under `/api/**` and SHALL describe their request parameters, response status codes and response schemas without changing runtime business responses beyond explicitly versioned additive fields.
 
 #### Scenario: Listings operation is documented
 - **WHEN** a client reads the OpenAPI document
@@ -22,8 +22,8 @@ The OpenAPI document SHALL include public RoomHub operations under `/api/**` and
 
 #### Scenario: Listings fields remain compatible
 - **WHEN** a frontend developer inspects the successful `GET /api/listings` item schema
-- **THEN** it contains `id`, `title`, `city`, `pricePerHour`, `capacity`, `spaceType`, `imageUrl`, `description` and `address` using camelCase names
-- **AND** adding OpenAPI support does not remove, rename or add fields in the actual listings JSON response
+- **THEN** it contains `id`, `title`, `city`, `pricePerHour`, `capacity`, `spaceType`, `imageUrl`, `description`, `address`, `ownerOrganizationName`, `latitude`, and `longitude` using camelCase names
+- **AND** adding coordinate support does not remove or rename existing fields in the actual listings JSON response
 
 ### Requirement: Reproducible file export
 The project SHALL provide a documented Maven Wrapper command that obtains the OpenAPI document from a fully started backend and writes it to `openapi/roomhub-b2b.openapi.json`.
@@ -143,4 +143,46 @@ Runtime OpenAPI SHALL describe `GET /api/listings/owned` as a protected landlord
 #### Scenario: Exported contract contains owned listings changes
 - **WHEN** the OpenAPI export command is run after implementing owned listing retrieval
 - **THEN** `openapi/roomhub-b2b.openapi.json` contains the same `GET /api/listings/owned` operation and response schema as the runtime OpenAPI document
+
+### Requirement: Listing coordinate fields are published in OpenAPI
+Runtime OpenAPI SHALL document `latitude` and `longitude` on listing response schemas as nullable decimal coordinate fields, and the exported `openapi/roomhub-b2b.openapi.json` file SHALL contain the same coordinate contract.
+
+#### Scenario: Public listing response schema documents coordinates
+- **WHEN** a frontend developer inspects `ListingResponseDto` in `GET /api/openapi`
+- **THEN** the schema includes nullable `latitude` and `longitude` fields
+- **AND** the fields are documented as geographic coordinates suitable for map marker placement
+
+#### Scenario: Publication and edit responses document coordinates
+- **WHEN** a frontend developer inspects the successful `POST /api/listings` and `PUT /api/listings/{listingId}` responses in `GET /api/openapi`
+- **THEN** each successful response references `ListingResponseDto`
+- **AND** that schema includes `latitude` and `longitude`
+
+#### Scenario: Owned listing response schema documents coordinates
+- **WHEN** a frontend developer inspects the successful `GET /api/listings/owned` item schema in `GET /api/openapi`
+- **THEN** `OwnedListingResponseDto` includes nullable `latitude` and `longitude` fields
+
+#### Scenario: Exported contract contains listing coordinate fields
+- **WHEN** the OpenAPI export command is run after implementing listing geocoding
+- **THEN** `openapi/roomhub-b2b.openapi.json` contains the same `latitude` and `longitude` response fields as the runtime OpenAPI document
+
+### Requirement: AI listing search contract is published
+Runtime OpenAPI SHALL describe `POST /api/listings/ai-search` as a public operation that accepts an AI search prompt request, returns an array of `ListingResponseDto`, and documents validation and upstream integration errors. The exported `openapi/roomhub-b2b.openapi.json` file SHALL contain the same contract.
+
+#### Scenario: AI search operation is present in runtime OpenAPI
+- **WHEN** a client reads `GET /api/openapi`
+- **THEN** `paths./api/listings/ai-search.post` is present
+- **AND** the operation does not require bearer security
+- **AND** the request body references an AI listing search request schema with required `prompt`
+- **AND** response `200` is documented as an array whose item schema represents `ListingResponseDto`
+- **AND** responses `400` and `502` are documented as `application/problem+json` errors
+
+#### Scenario: AI search request schema is documented
+- **WHEN** a frontend developer inspects the AI listing search request schema in `GET /api/openapi`
+- **THEN** the schema contains `prompt` using camelCase naming
+- **AND** the schema documents prompt length and non-blank validation constraints
+- **AND** the schema does not expose GigaChat credentials, token fields, or extracted filter internals as client-controlled fields
+
+#### Scenario: Exported contract contains AI search changes
+- **WHEN** the OpenAPI export command is run after implementing AI listing search
+- **THEN** `openapi/roomhub-b2b.openapi.json` contains the same `POST /api/listings/ai-search` operation, request schema, response schema, and status codes as the runtime OpenAPI document
 

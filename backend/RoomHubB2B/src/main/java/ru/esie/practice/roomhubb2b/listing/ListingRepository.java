@@ -2,8 +2,10 @@ package ru.esie.practice.roomhubb2b.listing;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,6 +13,26 @@ public interface ListingRepository extends JpaRepository<ListingEntity, Long> {
 
     @EntityGraph(attributePaths = "ownerOrganization")
     List<ListingEntity> findByStatus(ListingStatus status);
+
+    @EntityGraph(attributePaths = "ownerOrganization")
+    @Query("""
+            SELECT listing
+            FROM ListingEntity listing
+            WHERE listing.status = :status
+              AND (:city IS NULL OR LOWER(listing.city) = LOWER(:city))
+              AND (:spaceType IS NULL OR listing.spaceType = :spaceType)
+              AND (:minCapacity IS NULL OR listing.capacity >= :minCapacity)
+              AND (:maxPricePerHour IS NULL OR listing.pricePerHour <= :maxPricePerHour)
+            ORDER BY listing.pricePerHour ASC, listing.id ASC
+            """)
+    List<ListingEntity> searchPublished(
+            @Param("status") ListingStatus status,
+            @Param("city") String city,
+            @Param("spaceType") SpaceType spaceType,
+            @Param("minCapacity") Integer minCapacity,
+            @Param("maxPricePerHour") BigDecimal maxPricePerHour,
+            Pageable pageable
+    );
 
     @EntityGraph(attributePaths = "ownerOrganization")
     @Query("""
