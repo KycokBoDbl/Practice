@@ -12,12 +12,16 @@ import ru.esie.practice.roomhubb2b.listing.SpaceType;
 import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -26,6 +30,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AiListingSearchServiceTest {
+
+    private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-07-15T00:00:00Z"), ZoneOffset.UTC);
 
     private ListingRepository listingRepository;
     private GigaChatCompletionClient gigaChatClient;
@@ -37,53 +43,77 @@ class AiListingSearchServiceTest {
         listingRepository = mock(ListingRepository.class);
         gigaChatClient = mock(GigaChatCompletionClient.class);
         properties = properties();
+        when(listingRepository.findDistinctCitiesByStatus(ListingStatus.PUBLISHED))
+                .thenReturn(List.of("Барнаул", "Москва"));
         service = new AiListingSearchService(
                 listingRepository,
                 gigaChatClient,
                 properties,
-                new ObjectMapper()
+                new ObjectMapper(),
+                CLOCK
         );
     }
 
     @Test
     void searchesWithValidatedFilterAndMapsListings() {
-        when(gigaChatClient.extractListingFilterJson("Need Barnaul hall"))
+        when(gigaChatClient.extractListingFilterJson(any()))
                 .thenReturn("""
                         {
-                          "city": "Barnaul",
+                          "city": "Барнаул",
                           "spaceType": "CONFERENCE_HALL",
                           "minCapacity": 30,
+                          "minPricePerHour": 1000.00,
                           "maxPricePerHour": 5000.00,
+                          "availableFrom": "2026-07-16T09:00",
+                          "availableTo": "2026-07-16T18:00",
+                          "ignoredTerms": ["с проектором"],
                           "limit": 5
                         }
                         """);
         when(listingRepository.searchPublished(
                 eq(ListingStatus.PUBLISHED),
-                eq("Barnaul"),
+                eq("Барнаул"),
                 eq(SpaceType.CONFERENCE_HALL),
                 eq(30),
+                argThat(value -> value.compareTo(new BigDecimal("1000.00")) == 0),
                 argThat(value -> value.compareTo(new BigDecimal("5000.00")) == 0),
+                eq(true),
+                eq(LocalDateTime.of(2026, 7, 16, 9, 0)),
+                eq(LocalDateTime.of(2026, 7, 16, 18, 0)),
                 any(Pageable.class)
         )).thenReturn(List.of(listing()));
 
         var response = service.search(new AiListingSearchRequestDto("  Need Barnaul hall  "));
 
-        assertThat(response).hasSize(1);
-        assertThat(response.get(0).title()).isEqualTo("AI room");
-        assertThat(response.get(0).ownerOrganizationName()).isEqualTo("Landlord LLC");
+        assertThat(response.results()).hasSize(1);
+        assertThat(response.interpretedFilter().city()).isEqualTo("Барнаул");
+        assertThat(response.interpretedFilter().minPricePerHour()).isEqualByComparingTo("1000.00");
+        assertThat(response.interpretedFilter().availableFrom()).isEqualTo(LocalDateTime.of(2026, 7, 16, 9, 0));
+        assertThat(response.ignoredTerms()).containsExactly("с проектором");
+        assertThat(response.results().get(0).title()).isEqualTo("AI room");
+        assertThat(response.results().get(0).ownerOrganizationName()).isEqualTo("Landlord LLC");
+        verify(gigaChatClient).extractListingFilterJson(argThat(prompt ->
+                prompt.contains("Allowed cities: [\"Барнаул\",\"Москва\"]")
+                        && prompt.contains("Allowed space types: [\"MEETING_ROOM\",\"CONFERENCE_HALL\",\"CLASSROOM\",\"LOFT\",\"SHOWROOM\"]")
+                        && prompt.contains("User prompt: Need Barnaul hall")
+        ));
         verify(listingRepository).searchPublished(
                 eq(ListingStatus.PUBLISHED),
-                eq("Barnaul"),
+                eq("Барнаул"),
                 eq(SpaceType.CONFERENCE_HALL),
                 eq(30),
+                argThat(value -> value.compareTo(new BigDecimal("1000.00")) == 0),
                 argThat(value -> value.compareTo(new BigDecimal("5000.00")) == 0),
+                eq(true),
+                eq(LocalDateTime.of(2026, 7, 16, 9, 0)),
+                eq(LocalDateTime.of(2026, 7, 16, 18, 0)),
                 eq(Pageable.ofSize(5))
         );
     }
 
     @Test
     void allowsPartialFiltersAndUsesDefaultLimit() {
-        when(gigaChatClient.extractListingFilterJson("Need any loft"))
+        when(gigaChatClient.extractListingFilterJson(any()))
                 .thenReturn("{\"spaceType\":\"LOFT\"}");
 
         service.search(new AiListingSearchRequestDto("Need any loft"));
@@ -94,13 +124,17 @@ class AiListingSearchServiceTest {
                 eq(SpaceType.LOFT),
                 eq(null),
                 eq(null),
+                eq(null),
+                eq(false),
+                eq(LocalDateTime.of(1, 1, 1, 0, 0)),
+                eq(LocalDateTime.of(9999, 12, 31, 0, 0)),
                 eq(Pageable.ofSize(10))
         );
     }
 
     @Test
     void clampsLimitToConfiguredMaximum() {
-        when(gigaChatClient.extractListingFilterJson("Need many rooms"))
+        when(gigaChatClient.extractListingFilterJson(any()))
                 .thenReturn("{\"limit\":99}");
 
         service.search(new AiListingSearchRequestDto("Need many rooms"));
@@ -111,7 +145,55 @@ class AiListingSearchServiceTest {
                 eq(null),
                 eq(null),
                 eq(null),
+                eq(null),
+                eq(false),
+                eq(LocalDateTime.of(1, 1, 1, 0, 0)),
+                eq(LocalDateTime.of(9999, 12, 31, 0, 0)),
                 eq(Pageable.ofSize(20))
+        );
+    }
+
+    @Test
+    void resolvesRelativeAvailabilityDates() {
+        when(gigaChatClient.extractListingFilterJson(any()))
+                .thenReturn("""
+                        {
+                          "city": "Москва",
+                          "availableFrom": "TOMORROW_START",
+                          "availableTo": "TOMORROW_END"
+                        }
+                        """);
+
+        AiListingSearchResponseDto response = service.search(new AiListingSearchRequestDto("на завтра в мск"));
+
+        assertThat(response.interpretedFilter().city()).isEqualTo("Москва");
+        assertThat(response.interpretedFilter().availableFrom()).isEqualTo(LocalDateTime.of(2026, 7, 16, 0, 0));
+        assertThat(response.interpretedFilter().availableTo()).isEqualTo(LocalDateTime.of(2026, 7, 17, 0, 0));
+        verify(listingRepository).searchPublished(
+                eq(ListingStatus.PUBLISHED),
+                eq("Москва"),
+                eq(null),
+                eq(null),
+                eq(null),
+                eq(null),
+                eq(true),
+                eq(LocalDateTime.of(2026, 7, 16, 0, 0)),
+                eq(LocalDateTime.of(2026, 7, 17, 0, 0)),
+                eq(Pageable.ofSize(10))
+        );
+    }
+
+    @Test
+    void rejectsCityOutsideAllowedList() {
+        when(gigaChatClient.extractListingFilterJson(any()))
+                .thenReturn("{\"city\":\"Novosibirsk\"}");
+
+        assertThatThrownBy(() -> service.search(new AiListingSearchRequestDto("prompt")))
+                .isInstanceOf(AiListingSearchException.class)
+                .hasMessage("GigaChat model returned invalid listing filter");
+
+        verify(listingRepository, never()).searchPublished(
+                any(), any(), any(), any(), any(), any(), anyBoolean(), any(), any(), any()
         );
     }
 
@@ -122,7 +204,9 @@ class AiListingSearchServiceTest {
                 .hasMessage("prompt must not be blank");
 
         verify(gigaChatClient, never()).extractListingFilterJson(any());
-        verify(listingRepository, never()).searchPublished(any(), any(), any(), any(), any(), any());
+        verify(listingRepository, never()).searchPublished(
+                any(), any(), any(), any(), any(), any(), anyBoolean(), any(), any(), any()
+        );
     }
 
     @Test
@@ -138,19 +222,21 @@ class AiListingSearchServiceTest {
 
     @Test
     void rejectsUnknownSpaceType() {
-        when(gigaChatClient.extractListingFilterJson("prompt"))
+        when(gigaChatClient.extractListingFilterJson(any()))
                 .thenReturn("{\"spaceType\":\"UNKNOWN\"}");
 
         assertThatThrownBy(() -> service.search(new AiListingSearchRequestDto("prompt")))
                 .isInstanceOf(AiListingSearchException.class)
                 .hasMessage("GigaChat model returned invalid listing filter");
 
-        verify(listingRepository, never()).searchPublished(any(), any(), any(), any(), any(), any());
+        verify(listingRepository, never()).searchPublished(
+                any(), any(), any(), any(), any(), any(), anyBoolean(), any(), any(), any()
+        );
     }
 
     @Test
     void rejectsMalformedJson() {
-        when(gigaChatClient.extractListingFilterJson("prompt")).thenReturn("not json");
+        when(gigaChatClient.extractListingFilterJson(any())).thenReturn("not json");
 
         assertThatThrownBy(() -> service.search(new AiListingSearchRequestDto("prompt")))
                 .isInstanceOf(AiListingSearchException.class)
@@ -159,7 +245,7 @@ class AiListingSearchServiceTest {
 
     @Test
     void rejectsUnsupportedExtraFields() {
-        when(gigaChatClient.extractListingFilterJson("prompt"))
+        when(gigaChatClient.extractListingFilterJson(any()))
                 .thenReturn("{\"city\":\"Barnaul\",\"sql\":\"DROP TABLE listings\"}");
 
         assertThatThrownBy(() -> service.search(new AiListingSearchRequestDto("prompt")))
@@ -169,8 +255,17 @@ class AiListingSearchServiceTest {
 
     @Test
     void rejectsNegativeNumericValues() {
-        when(gigaChatClient.extractListingFilterJson("prompt"))
+        when(gigaChatClient.extractListingFilterJson(any()))
                 .thenReturn("{\"minCapacity\":-1}");
+
+        assertThatThrownBy(() -> service.search(new AiListingSearchRequestDto("prompt")))
+                .isInstanceOf(AiListingSearchException.class);
+    }
+
+    @Test
+    void rejectsInvalidPriceRange() {
+        when(gigaChatClient.extractListingFilterJson(any()))
+                .thenReturn("{\"minPricePerHour\":5000,\"maxPricePerHour\":1000}");
 
         assertThatThrownBy(() -> service.search(new AiListingSearchRequestDto("prompt")))
                 .isInstanceOf(AiListingSearchException.class);

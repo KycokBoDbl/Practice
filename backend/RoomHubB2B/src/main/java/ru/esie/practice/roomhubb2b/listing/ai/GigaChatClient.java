@@ -16,12 +16,39 @@ import java.util.Map;
 public class GigaChatClient implements GigaChatCompletionClient {
 
     private static final String SYSTEM_PROMPT = """
-            Extract a RoomHub listing search filter from the user prompt.
-            Return only valid JSON with these keys: city, spaceType, minCapacity, maxPricePerHour, limit.
-            Use null for unknown values.
-            spaceType must be one of MEETING_ROOM, CONFERENCE_HALL, CLASSROOM, LOFT, SHOWROOM, or null.
+            Извлеки фильтр поиска объявлений RoomHub из живого русского или английского запроса.
+            Return only valid JSON with these keys:
+            city, spaceType, minCapacity, minPricePerHour, maxPricePerHour, availableFrom, availableTo, ignoredTerms, limit.
+            Use null for unknown scalar values and [] for ignoredTerms when every meaningful term is represented.
             minCapacity and limit must be positive integers when present.
-            maxPricePerHour must be a positive decimal when present.
+            minPricePerHour and maxPricePerHour must be positive decimals when present.
+            availableFrom and availableTo must be ISO-8601 local date-time strings aligned to whole hours, or null.
+            Interpret relative dates against the "Current date" line in the user message:
+            - "сегодня" means current date 00:00 to next date 00:00.
+            - "завтра" means current date plus 1 day 00:00 to current date plus 2 days 00:00.
+            The user message contains an Allowed cities JSON array.
+            If the user mentions a city, normalize Russian cases, abbreviations, transliteration, and common synonyms
+            to exactly one string from Allowed cities.
+            city must be either exactly one value from Allowed cities or null.
+            Return null when no allowed city matches confidently. Never invent a city and never return a city outside Allowed cities.
+            The user message contains an Allowed space types JSON array.
+            If the user describes a type of room or venue, normalize Russian wording, synonyms, and intent
+            to exactly one string from Allowed space types.
+            spaceType must be either exactly one value from Allowed space types or null.
+            Return null when no allowed space type matches confidently. Never invent a spaceType and never return a value outside Allowed space types.
+            Type hints:
+            - переговорка, комната для созвона, встреча -> MEETING_ROOM.
+            - конференция, зал, лекция, корпоратив -> CONFERENCE_HALL.
+            - класс, тренинг, обучение, проектор для занятия -> CLASSROOM.
+            - лофт, фотосессия, вечеринка, неформальная встреча -> LOFT.
+            - шоурум, pop-up, показ, презентация продукта -> SHOWROOM.
+            Treat supported fields as hard filters. Put meaningful unsupported preferences into ignoredTerms instead of forcing them into hard filters:
+            район, метро, стиль, оборудование, этаж, парковка, удобства, "уютный", "с экраном", "с проектором".
+            Examples:
+            User: Current date: 2026-07-15. Allowed cities: ["Москва","Санкт-Петербург"]. Allowed space types: ["MEETING_ROOM","CONFERENCE_HALL","CLASSROOM","LOFT","SHOWROOM"]. User prompt: Нужен уютный лофт в Москве на завтра до 5000 в час
+            JSON: {"city":"Москва","spaceType":"LOFT","minCapacity":null,"minPricePerHour":null,"maxPricePerHour":5000,"availableFrom":"2026-07-16T00:00","availableTo":"2026-07-17T00:00","ignoredTerms":["уютный"],"limit":null}
+            User: Current date: 2026-07-15. Allowed cities: ["Москва","Санкт-Петербург"]. Allowed space types: ["MEETING_ROOM","CONFERENCE_HALL","CLASSROOM","LOFT","SHOWROOM"]. User prompt: переговорка в мск от 1000 до 3000 для 8 человек с экраном
+            JSON: {"city":"Москва","spaceType":"MEETING_ROOM","minCapacity":8,"minPricePerHour":1000,"maxPricePerHour":3000,"availableFrom":null,"availableTo":null,"ignoredTerms":["с экраном"],"limit":null}
             Do not include explanations, markdown, SQL, or extra keys.
             """;
 

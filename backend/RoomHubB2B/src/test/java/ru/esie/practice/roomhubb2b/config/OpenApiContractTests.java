@@ -210,10 +210,8 @@ class OpenApiContractTests {
                 .andExpect(jsonPath(operation + ".requestBody.required").value(true))
                 .andExpect(jsonPath(operation + ".requestBody.content['application/json'].schema['$ref']")
                         .value("#/components/schemas/AiListingSearchRequestDto"))
-                .andExpect(jsonPath(operation + ".responses['200'].content['application/json'].schema.type")
-                        .value("array"))
-                .andExpect(jsonPath(operation + ".responses['200'].content['application/json'].schema.items['$ref']")
-                        .value("#/components/schemas/ListingResponseDto"))
+                .andExpect(jsonPath(operation + ".responses['200'].content['application/json'].schema['$ref']")
+                        .value("#/components/schemas/AiListingSearchResponseDto"))
                 .andExpect(jsonPath(operation + ".responses['400'].content['application/problem+json'].schema['$ref']")
                         .value("#/components/schemas/ProblemDetail"))
                 .andExpect(jsonPath(operation + ".responses['502'].content['application/problem+json'].schema['$ref']")
@@ -229,6 +227,32 @@ class OpenApiContractTests {
                         .doesNotExist())
                 .andExpect(jsonPath("$.components.schemas.AiListingSearchRequestDto.properties.spaceType")
                         .doesNotExist())
+                .andExpect(jsonPath("$.components.schemas.AiListingSearchResponseDto.properties.interpretedFilter")
+                        .exists())
+                .andExpect(jsonPath("$.components.schemas.AiListingSearchResponseDto.properties.ignoredTerms.items.type")
+                        .value("string"))
+                .andExpect(jsonPath("$.components.schemas.AiListingSearchResponseDto.properties.results.items['$ref']")
+                        .value("#/components/schemas/ListingResponseDto"))
+                .andExpect(jsonPath("$.components.schemas.AiListingSearchInterpretedFilterDto.properties.city")
+                        .exists())
+                .andExpect(jsonPath("$.components.schemas.AiListingSearchInterpretedFilterDto.properties.spaceType")
+                        .exists())
+                .andExpect(jsonPath("$.components.schemas.AiListingSearchInterpretedFilterDto.properties.minCapacity")
+                        .exists())
+                .andExpect(jsonPath("$.components.schemas.AiListingSearchInterpretedFilterDto.properties.minPricePerHour")
+                        .exists())
+                .andExpect(jsonPath("$.components.schemas.AiListingSearchInterpretedFilterDto.properties.maxPricePerHour")
+                        .exists())
+                .andExpect(jsonPath("$.components.schemas.AiListingSearchInterpretedFilterDto.properties.availableFrom.type")
+                        .value(org.hamcrest.Matchers.anyOf(
+                                org.hamcrest.Matchers.is("string"),
+                                org.hamcrest.Matchers.hasItem("string")
+                        )))
+                .andExpect(jsonPath("$.components.schemas.AiListingSearchInterpretedFilterDto.properties.availableTo.type")
+                        .value(org.hamcrest.Matchers.anyOf(
+                                org.hamcrest.Matchers.is("string"),
+                                org.hamcrest.Matchers.hasItem("string")
+                        )))
                 .andExpect(jsonPath("$['paths']['/api/listings']['get'].security").doesNotExist());
     }
 
