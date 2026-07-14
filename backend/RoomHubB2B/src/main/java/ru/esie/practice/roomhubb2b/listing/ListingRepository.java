@@ -19,7 +19,7 @@ public interface ListingRepository extends JpaRepository<ListingEntity, Long> {
             SELECT listing
             FROM ListingEntity listing
             WHERE listing.status = :status
-              AND (:city IS NULL OR LOWER(listing.city) = LOWER(:city))
+              AND (:city IS NULL OR LOWER(listing.city) = :city)
               AND (:spaceType IS NULL OR listing.spaceType = :spaceType)
               AND (:minCapacity IS NULL OR listing.capacity >= :minCapacity)
               AND (:maxPricePerHour IS NULL OR listing.pricePerHour <= :maxPricePerHour)

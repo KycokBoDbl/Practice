@@ -31,6 +31,60 @@ export interface ListingAvailability {
   busyIntervals: BusyInterval[]
 }
 
+export interface AiListingSearchRequest {
+  prompt: string
+}
+
+export type AiListingSearchErrorKind = 'validation' | 'unavailable' | 'unknown'
+
+export interface ParsedAiListingSearchApiError extends ParsedProblemDetail {
+  kind: AiListingSearchErrorKind
+}
+
+function looksLikeUtf8Mojibake(value: string) {
+  return /[ÐÑ]/.test(value)
+}
+
+function decodeUtf8Mojibake(value: string) {
+  try {
+    const bytes = Uint8Array.from(
+      Array.from(value, (character) => character.charCodeAt(0) & 0xff),
+    )
+
+    const decoded = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+    return decoded.includes('\uFFFD') ? value : decoded
+  } catch {
+    return value
+  }
+}
+
+function normalizeListingText(value: string | null) {
+  if (!value || !looksLikeUtf8Mojibake(value)) {
+    return value
+  }
+
+  return decodeUtf8Mojibake(value)
+}
+
+function normalizeListing(listing: Listing): Listing {
+  return {
+    ...listing,
+    title: normalizeListingText(listing.title) ?? listing.title,
+    description: normalizeListingText(listing.description),
+    city: normalizeListingText(listing.city) ?? listing.city,
+    address: normalizeListingText(listing.address) ?? listing.address,
+    imageUrl: normalizeListingText(listing.imageUrl),
+    ownerOrganizationName: normalizeListingText(listing.ownerOrganizationName),
+  }
+}
+
+function normalizeOwnedListing(listing: OwnedListing): OwnedListing {
+  return {
+    ...normalizeListing(listing),
+    status: listing.status,
+  }
+}
+
 function getErrorStatus(error: unknown, parsedError: ParsedProblemDetail) {
   if (typeof parsedError.status === 'number') {
     return parsedError.status
@@ -63,6 +117,14 @@ function getListingManagementErrorKind(
   return 'unknown'
 }
 
+function getAiListingSearchErrorKind(
+  status: number | undefined,
+): AiListingSearchErrorKind {
+  if (status === 400) return 'validation'
+  if (status === 502) return 'unavailable'
+  return 'unknown'
+}
+
 export function parseListingPublicationApiError(
   error: unknown,
 ): ParsedListingPublicationApiError {
@@ -89,21 +151,41 @@ export function parseListingManagementApiError(
   }
 }
 
+export function parseAiListingSearchApiError(
+  error: unknown,
+): ParsedAiListingSearchApiError {
+  const parsedError = parseApiError(error)
+  const status = getErrorStatus(error, parsedError)
+
+  return {
+    ...parsedError,
+    status,
+    kind: getAiListingSearchErrorKind(status),
+  }
+}
+
 export async function getListings(): Promise<Listing[]> {
   const response = await api.get<Listing[]>('/api/listings')
-  return response.data
+  return response.data.map(normalizeListing)
+}
+
+export async function aiSearchListings(
+  request: AiListingSearchRequest,
+): Promise<Listing[]> {
+  const response = await api.post<Listing[]>('/api/listings/ai-search', request)
+  return response.data.map(normalizeListing)
 }
 
 export async function getOwnedListings(): Promise<OwnedListing[]> {
   const response = await api.get<OwnedListing[]>('/api/listings/owned')
-  return response.data
+  return response.data.map(normalizeOwnedListing)
 }
 
 export async function publishListing(
   request: CreateListingRequest,
 ): Promise<Listing> {
   const response = await api.post<Listing>('/api/listings', request)
-  return response.data
+  return normalizeListing(response.data)
 }
 
 export async function updateListing(
@@ -111,7 +193,7 @@ export async function updateListing(
   request: UpdateListingRequest,
 ): Promise<Listing> {
   const response = await api.put<Listing>(`/api/listings/${listingId}`, request)
-  return response.data
+  return normalizeListing(response.data)
 }
 
 export async function hideListing(

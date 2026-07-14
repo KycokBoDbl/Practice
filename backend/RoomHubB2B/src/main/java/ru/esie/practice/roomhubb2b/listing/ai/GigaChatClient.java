@@ -1,7 +1,6 @@
 package ru.esie.practice.roomhubb2b.listing.ai;
 
 import org.springframework.http.MediaType;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -31,12 +30,7 @@ public class GigaChatClient implements GigaChatCompletionClient {
     private final GigaChatTokenClient tokenClient;
 
     public GigaChatClient(GigaChatProperties properties, ObjectMapper objectMapper, GigaChatTokenClient tokenClient) {
-        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(properties.timeout());
-        requestFactory.setReadTimeout(properties.timeout());
-        this.restClient = RestClient.builder()
-                .requestFactory(requestFactory)
-                .build();
+        this.restClient = GigaChatRestClientFactory.create(properties);
         this.objectMapper = objectMapper;
         this.properties = properties;
         this.tokenClient = tokenClient;

@@ -36,6 +36,8 @@ public class GigaChatProperties {
     @NotNull
     private Duration tokenSafetySkew = Duration.ofSeconds(30);
 
+    private boolean insecureSkipTlsVerification = false;
+
     @Min(1)
     @Max(AiListingSearchRequestDto.MAX_PROMPT_LENGTH)
     private int maxPromptLength = AiListingSearchRequestDto.MAX_PROMPT_LENGTH;
@@ -102,6 +104,14 @@ public class GigaChatProperties {
 
     public void setTokenSafetySkew(Duration tokenSafetySkew) {
         this.tokenSafetySkew = tokenSafetySkew;
+    }
+
+    public boolean insecureSkipTlsVerification() {
+        return insecureSkipTlsVerification;
+    }
+
+    public void setInsecureSkipTlsVerification(boolean insecureSkipTlsVerification) {
+        this.insecureSkipTlsVerification = insecureSkipTlsVerification;
     }
 
     public int maxPromptLength() {

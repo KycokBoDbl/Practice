@@ -1,7 +1,6 @@
 package ru.esie.practice.roomhubb2b.listing.ai;
 
 import org.springframework.http.MediaType;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -25,12 +24,7 @@ public class GigaChatTokenClient {
     private AccessToken cachedToken;
 
     public GigaChatTokenClient(GigaChatProperties properties, ObjectMapper objectMapper, Clock clock) {
-        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(properties.timeout());
-        requestFactory.setReadTimeout(properties.timeout());
-        this.restClient = RestClient.builder()
-                .requestFactory(requestFactory)
-                .build();
+        this.restClient = GigaChatRestClientFactory.create(properties);
         this.objectMapper = objectMapper;
         this.properties = properties;
         this.clock = clock;
