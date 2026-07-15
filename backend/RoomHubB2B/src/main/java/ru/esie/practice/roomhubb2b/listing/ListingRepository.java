@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,6 +14,14 @@ public interface ListingRepository extends JpaRepository<ListingEntity, Long> {
 
     @EntityGraph(attributePaths = "ownerOrganization")
     List<ListingEntity> findByStatus(ListingStatus status);
+
+    @Query("""
+            SELECT DISTINCT listing.city
+            FROM ListingEntity listing
+            WHERE listing.status = :status
+            ORDER BY listing.city
+            """)
+    List<String> findDistinctCitiesByStatus(@Param("status") ListingStatus status);
 
     @EntityGraph(attributePaths = "ownerOrganization")
     @Query("""
@@ -22,7 +31,15 @@ public interface ListingRepository extends JpaRepository<ListingEntity, Long> {
               AND (:city IS NULL OR LOWER(listing.city) = :city)
               AND (:spaceType IS NULL OR listing.spaceType = :spaceType)
               AND (:minCapacity IS NULL OR listing.capacity >= :minCapacity)
+              AND (:minPricePerHour IS NULL OR listing.pricePerHour >= :minPricePerHour)
               AND (:maxPricePerHour IS NULL OR listing.pricePerHour <= :maxPricePerHour)
+              AND (:availabilityRequired = false OR NOT EXISTS (
+                  SELECT period.id
+                  FROM ListingUnavailabilityPeriodEntity period
+                  WHERE period.listingId = listing.id
+                    AND period.startAt < :availableTo
+                    AND period.endAt > :availableFrom
+              ))
             ORDER BY listing.pricePerHour ASC, listing.id ASC
             """)
     List<ListingEntity> searchPublished(
@@ -30,7 +47,11 @@ public interface ListingRepository extends JpaRepository<ListingEntity, Long> {
             @Param("city") String city,
             @Param("spaceType") SpaceType spaceType,
             @Param("minCapacity") Integer minCapacity,
+            @Param("minPricePerHour") BigDecimal minPricePerHour,
             @Param("maxPricePerHour") BigDecimal maxPricePerHour,
+            @Param("availabilityRequired") boolean availabilityRequired,
+            @Param("availableFrom") LocalDateTime availableFrom,
+            @Param("availableTo") LocalDateTime availableTo,
             Pageable pageable
     );
 

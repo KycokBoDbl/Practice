@@ -17,6 +17,8 @@ import ru.esie.practice.roomhubb2b.auth.OrganizationRepository;
 import ru.esie.practice.roomhubb2b.listing.ListingEntity;
 import ru.esie.practice.roomhubb2b.listing.ListingRepository;
 import ru.esie.practice.roomhubb2b.listing.SpaceType;
+import ru.esie.practice.roomhubb2b.listing.availability.ListingUnavailabilityPeriodEntity;
+import ru.esie.practice.roomhubb2b.listing.availability.ListingUnavailabilityPeriodRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -48,6 +50,9 @@ class AiListingSearchApiIntegrationTest {
     private ListingRepository listingRepository;
 
     @Autowired
+    private ListingUnavailabilityPeriodRepository periodRepository;
+
+    @Autowired
     private StubGigaChatCompletionClient gigaChatClient;
 
     private OrganizationEntity landlord;
@@ -62,18 +67,18 @@ class AiListingSearchApiIntegrationTest {
 
     @Test
     void searchesPublishedListingsFromPromptWithoutAuthentication() throws Exception {
-        ListingEntity matching = listing("Matching conference hall", "Barnaul",
+        ListingEntity matching = listing("Matching conference hall", "Барнаул",
                 new BigDecimal("4500.00"), 40, SpaceType.CONFERENCE_HALL);
-        ListingEntity tooSmall = listing("Small conference hall", "Barnaul",
+        ListingEntity tooSmall = listing("Small conference hall", "Барнаул",
                 new BigDecimal("3500.00"), 10, SpaceType.CONFERENCE_HALL);
-        ListingEntity archived = listing("Archived conference hall", "Barnaul",
+        ListingEntity archived = listing("Archived conference hall", "Барнаул",
                 new BigDecimal("4000.00"), 40, SpaceType.CONFERENCE_HALL);
         archived.archive();
         listingRepository.saveAndFlush(archived);
 
         gigaChatClient.response.set("""
                 {
-                  "city": "Barnaul",
+                  "city": "Барнаул",
                   "spaceType": "CONFERENCE_HALL",
                   "minCapacity": 30,
                   "maxPricePerHour": 5000.00,
@@ -86,14 +91,52 @@ class AiListingSearchApiIntegrationTest {
                         .content("{\"prompt\":\"Need a conference hall in Barnaul\"}"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(matching.getId()))
-                .andExpect(jsonPath("$[0].title").value("Matching conference hall"))
-                .andExpect(jsonPath("$[0].ownerOrganizationName").value(landlord.getLegalName()))
-                .andExpect(jsonPath("$[?(@.id == " + tooSmall.getId() + ")]").isEmpty())
-                .andExpect(jsonPath("$[?(@.id == " + archived.getId() + ")]").isEmpty());
+                .andExpect(jsonPath("$.interpretedFilter.city").value("Барнаул"))
+                .andExpect(jsonPath("$.interpretedFilter.spaceType").value("CONFERENCE_HALL"))
+                .andExpect(jsonPath("$.interpretedFilter.minCapacity").value(30))
+                .andExpect(jsonPath("$.interpretedFilter.maxPricePerHour").value(5000.00))
+                .andExpect(jsonPath("$.ignoredTerms").isArray())
+                .andExpect(jsonPath("$.results.length()").value(1))
+                .andExpect(jsonPath("$.results[0].id").value(matching.getId()))
+                .andExpect(jsonPath("$.results[0].title").value("Matching conference hall"))
+                .andExpect(jsonPath("$.results[0].ownerOrganizationName").value(landlord.getLegalName()))
+                .andExpect(jsonPath("$.results[?(@.id == " + tooSmall.getId() + ")]").isEmpty())
+                .andExpect(jsonPath("$.results[?(@.id == " + archived.getId() + ")]").isEmpty());
 
-        assertThat(gigaChatClient.lastPrompt.get()).isEqualTo("Need a conference hall in Barnaul");
+        assertThat(gigaChatClient.lastPrompt.get())
+                .contains("Current date:", "Allowed cities:", "Барнаул", "User prompt: Need a conference hall in Barnaul");
+    }
+
+    @Test
+    void excludesListingsUnavailableForRequestedWindow() throws Exception {
+        ListingEntity free = listing("Free room", "Москва",
+                new BigDecimal("2500.00"), 10, SpaceType.MEETING_ROOM);
+        ListingEntity busy = listing("Busy room", "Москва",
+                new BigDecimal("2000.00"), 10, SpaceType.MEETING_ROOM);
+        periodRepository.saveAndFlush(new ListingUnavailabilityPeriodEntity(
+                busy.getId(),
+                LocalDateTime.of(2026, 7, 16, 10, 0),
+                LocalDateTime.of(2026, 7, 16, 12, 0)
+        ));
+
+        gigaChatClient.response.set("""
+                {
+                  "city": "Москва",
+                  "spaceType": "MEETING_ROOM",
+                  "availableFrom": "2026-07-16T09:00",
+                  "availableTo": "2026-07-16T11:00",
+                  "limit": 10
+                }
+                """);
+
+        mockMvc.perform(post("/api/listings/ai-search")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"prompt\":\"Нужна переговорка в Москве завтра утром\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.interpretedFilter.availableFrom").value("2026-07-16T09:00:00"))
+                .andExpect(jsonPath("$.interpretedFilter.availableTo").value("2026-07-16T11:00:00"))
+                .andExpect(jsonPath("$.results[?(@.id == " + free.getId() + ")]").exists())
+                .andExpect(jsonPath("$.results[?(@.id == " + busy.getId() + ")]").isEmpty());
     }
 
     @Test
@@ -110,15 +153,15 @@ class AiListingSearchApiIntegrationTest {
 
     @Test
     void returnsEmptyArrayWhenNoListingsMatch() throws Exception {
-        listing("Meeting room", "Barnaul", new BigDecimal("2500.00"), 20, SpaceType.MEETING_ROOM);
-        gigaChatClient.response.set("{\"city\":\"Novosibirsk\"}");
+        listing("Meeting room", "Барнаул", new BigDecimal("2500.00"), 20, SpaceType.MEETING_ROOM);
+        gigaChatClient.response.set("{\"city\":\"Барнаул\",\"minCapacity\":100}");
 
         mockMvc.perform(post("/api/listings/ai-search")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"prompt\":\"Need something in Novosibirsk\"}"))
+                        .content("{\"prompt\":\"Need a large room in Barnaul\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.results").isArray())
+                .andExpect(jsonPath("$.results.length()").value(0));
     }
 
     @Test
@@ -136,7 +179,7 @@ class AiListingSearchApiIntegrationTest {
 
     @Test
     void existingListingCatalogRemainsPublic() throws Exception {
-        ListingEntity listing = listing("Existing catalog room", "Barnaul",
+        ListingEntity listing = listing("Existing catalog room", "Барнаул",
                 new BigDecimal("2500.00"), 20, SpaceType.MEETING_ROOM);
 
         mockMvc.perform(get("/api/listings"))

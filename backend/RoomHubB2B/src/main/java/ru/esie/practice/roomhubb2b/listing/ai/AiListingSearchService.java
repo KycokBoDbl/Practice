@@ -14,6 +14,12 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.util.Locale;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -77,7 +83,7 @@ public class AiListingSearchService {
                     throw invalidFilter();
                 }
             }
-            String city = normalizedCityOrNull(root.path("city"));
+            String city = textOrNull(root.path("city"));
             SpaceType spaceType = spaceTypeOrNull(root.path("spaceType"));
             Integer minCapacity = positiveIntegerOrNull(root.path("minCapacity"));
             BigDecimal maxPricePerHour = positiveDecimalOrNull(root.path("maxPricePerHour"));
@@ -106,11 +112,6 @@ public class AiListingSearchService {
         }
         String value = node.asText().trim();
         return value.isBlank() ? null : value;
-    }
-
-    private String normalizedCityOrNull(JsonNode node) {
-        String city = textOrNull(node);
-        return city == null ? null : city.toLowerCase(Locale.ROOT);
     }
 
     private SpaceType spaceTypeOrNull(JsonNode node) {
