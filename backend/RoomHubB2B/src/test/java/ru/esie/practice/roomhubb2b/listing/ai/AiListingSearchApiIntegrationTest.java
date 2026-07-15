@@ -91,17 +91,13 @@ class AiListingSearchApiIntegrationTest {
                         .content("{\"prompt\":\"Need a conference hall in Barnaul\"}"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.interpretedFilter.city").value("Барнаул"))
-                .andExpect(jsonPath("$.interpretedFilter.spaceType").value("CONFERENCE_HALL"))
-                .andExpect(jsonPath("$.interpretedFilter.minCapacity").value(30))
-                .andExpect(jsonPath("$.interpretedFilter.maxPricePerHour").value(5000.00))
-                .andExpect(jsonPath("$.ignoredTerms").isArray())
-                .andExpect(jsonPath("$.results.length()").value(1))
-                .andExpect(jsonPath("$.results[0].id").value(matching.getId()))
-                .andExpect(jsonPath("$.results[0].title").value("Matching conference hall"))
-                .andExpect(jsonPath("$.results[0].ownerOrganizationName").value(landlord.getLegalName()))
-                .andExpect(jsonPath("$.results[?(@.id == " + tooSmall.getId() + ")]").isEmpty())
-                .andExpect(jsonPath("$.results[?(@.id == " + archived.getId() + ")]").isEmpty());
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(matching.getId()))
+                .andExpect(jsonPath("$[0].title").value("Matching conference hall"))
+                .andExpect(jsonPath("$[0].ownerOrganizationName").value(landlord.getLegalName()))
+                .andExpect(jsonPath("$[?(@.id == " + tooSmall.getId() + ")]").isEmpty())
+                .andExpect(jsonPath("$[?(@.id == " + archived.getId() + ")]").isEmpty());
 
         assertThat(gigaChatClient.lastPrompt.get())
                 .contains("Current date:", "Allowed cities:", "Барнаул", "User prompt: Need a conference hall in Barnaul");
@@ -133,10 +129,8 @@ class AiListingSearchApiIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"prompt\":\"Нужна переговорка в Москве завтра утром\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.interpretedFilter.availableFrom").value("2026-07-16T09:00:00"))
-                .andExpect(jsonPath("$.interpretedFilter.availableTo").value("2026-07-16T11:00:00"))
-                .andExpect(jsonPath("$.results[?(@.id == " + free.getId() + ")]").exists())
-                .andExpect(jsonPath("$.results[?(@.id == " + busy.getId() + ")]").isEmpty());
+                .andExpect(jsonPath("$[?(@.id == " + free.getId() + ")]").exists())
+                .andExpect(jsonPath("$[?(@.id == " + busy.getId() + ")]").isEmpty());
     }
 
     @Test
@@ -160,8 +154,8 @@ class AiListingSearchApiIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"prompt\":\"Need a large room in Barnaul\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.results").isArray())
-                .andExpect(jsonPath("$.results.length()").value(0));
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
     }
 
     @Test

@@ -72,7 +72,7 @@ class AiListingSearchServiceTest {
                         """);
         when(listingRepository.searchPublished(
                 eq(ListingStatus.PUBLISHED),
-                eq("Барнаул"),
+                eq("барнаул"),
                 eq(SpaceType.CONFERENCE_HALL),
                 eq(30),
                 argThat(value -> value.compareTo(new BigDecimal("1000.00")) == 0),
@@ -99,7 +99,7 @@ class AiListingSearchServiceTest {
         ));
         verify(listingRepository).searchPublished(
                 eq(ListingStatus.PUBLISHED),
-                eq("Барнаул"),
+                eq("барнаул"),
                 eq(SpaceType.CONFERENCE_HALL),
                 eq(30),
                 argThat(value -> value.compareTo(new BigDecimal("1000.00")) == 0),
@@ -171,7 +171,7 @@ class AiListingSearchServiceTest {
         assertThat(response.interpretedFilter().availableTo()).isEqualTo(LocalDateTime.of(2026, 7, 17, 0, 0));
         verify(listingRepository).searchPublished(
                 eq(ListingStatus.PUBLISHED),
-                eq("Москва"),
+                eq("москва"),
                 eq(null),
                 eq(null),
                 eq(null),
