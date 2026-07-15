@@ -18,7 +18,7 @@ const MAX_AI_PROMPT_LENGTH = 1000
 export function SpacesPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { isAuthenticated, loading: authLoading } = useAuth()
-  const { listings, loading } = useListingsPolling()
+  const { errorMessage, listings, loading } = useListingsPolling()
   const [aiResults, setAiResults] = useState<Listing[]>([])
   const [aiActive, setAiActive] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
@@ -96,6 +96,16 @@ export function SpacesPage() {
     return <p>Загрузка помещений...</p>
   }
 
+  if (errorMessage && listings.length === 0) {
+    return (
+      <main className={styles.page}>
+        <div className={styles.emptyState}>
+          <p>{errorMessage}</p>
+        </div>
+      </main>
+    )
+  }
+
   return (
     <main className={styles.page}>
       {showProjectBanner && (
@@ -152,6 +162,12 @@ export function SpacesPage() {
         onAiSearch={handleAiSearch}
         onClearAiSearch={clearAiSearch}
       />
+
+      {errorMessage && (
+        <div className={styles.emptyState}>
+          <p>{errorMessage}</p>
+        </div>
+      )}
 
       {!aiActive && listings.length === 0 ? (
         <p>Помещений пока нет.</p>

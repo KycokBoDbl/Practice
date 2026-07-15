@@ -110,6 +110,13 @@ export function ListingPublicationPage() {
       return
     }
 
+    if (
+      event.target instanceof HTMLButtonElement &&
+      event.target.type === 'submit'
+    ) {
+      return
+    }
+
     event.preventDefault()
   }
 

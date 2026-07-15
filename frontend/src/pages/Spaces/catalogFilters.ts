@@ -31,12 +31,6 @@ export const emptyCatalogQuery: CatalogQuery = {
   maxPrice: '',
 }
 
-export interface CatalogFilterBadge {
-  key: CatalogSearchParamName
-  label: string
-  value: string
-}
-
 export function parseCatalogQuery(searchParams: URLSearchParams): CatalogQuery {
   return {
     q: searchParams.get('q') ?? '',
@@ -73,60 +67,6 @@ export function getCatalogCityOptions(listings: Listing[]) {
 
 export function isCatalogQueryEmpty(query: CatalogQuery) {
   return catalogSearchParamNames.every((name) => query[name].trim() === '')
-}
-
-export function getActiveCatalogFilterBadges(query: CatalogQuery): CatalogFilterBadge[] {
-  const badges: CatalogFilterBadge[] = []
-
-  if (query.q.trim()) {
-    badges.push({
-      key: 'q',
-      label: 'Поиск',
-      value: query.q.trim(),
-    })
-  }
-
-  if (query.city.trim()) {
-    badges.push({
-      key: 'city',
-      label: 'Город',
-      value: query.city.trim(),
-    })
-  }
-
-  if (query.minCapacity.trim()) {
-    badges.push({
-      key: 'minCapacity',
-      label: 'Вместимость от',
-      value: query.minCapacity.trim(),
-    })
-  }
-
-  if (query.maxCapacity.trim()) {
-    badges.push({
-      key: 'maxCapacity',
-      label: 'Вместимость до',
-      value: query.maxCapacity.trim(),
-    })
-  }
-
-  if (query.minPrice.trim()) {
-    badges.push({
-      key: 'minPrice',
-      label: 'Цена от',
-      value: `${query.minPrice.trim()} ₽/час`,
-    })
-  }
-
-  if (query.maxPrice.trim()) {
-    badges.push({
-      key: 'maxPrice',
-      label: 'Цена до',
-      value: `${query.maxPrice.trim()} ₽/час`,
-    })
-  }
-
-  return badges
 }
 
 export function filterCatalogListings(
