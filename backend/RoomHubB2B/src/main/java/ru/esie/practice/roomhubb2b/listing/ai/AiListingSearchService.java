@@ -1,6 +1,8 @@
 package ru.esie.practice.roomhubb2b.listing.ai;
 
 import org.springframework.data.domain.PageRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import ru.esie.practice.roomhubb2b.auth.OrganizationEntity;
@@ -25,6 +27,8 @@ import java.util.Set;
 
 @Service
 public class AiListingSearchService {
+
+    private static final Logger log = LoggerFactory.getLogger(AiListingSearchService.class);
 
     private static final LocalDateTime UNUSED_AVAILABLE_FROM = LocalDateTime.of(1, 1, 1, 0, 0);
     private static final LocalDateTime UNUSED_AVAILABLE_TO = LocalDateTime.of(9999, 12, 31, 0, 0);
@@ -69,9 +73,9 @@ public class AiListingSearchService {
         }
 
         List<String> allowedCities = listingRepository.findDistinctCitiesByStatus(ListingStatus.PUBLISHED);
-        AiListingSearchInterpretation interpretation = parseInterpretation(
-                gigaChatClient.extractListingFilterJson(promptWithContext(prompt, allowedCities))
-        );
+        String extractedFilterJson = gigaChatClient.extractListingFilterJson(promptWithContext(prompt, allowedCities));
+        log.info("GigaChat listing search filter JSON: {}", extractedFilterJson);
+        AiListingSearchInterpretation interpretation = parseInterpretation(extractedFilterJson);
         AiListingSearchFilter filter = validateFilter(interpretation.filter(), allowedCities);
         boolean availabilityRequired = filter.availableFrom() != null;
         List<ListingResponseDto> results = listingRepository.searchPublished(
@@ -104,6 +108,21 @@ public class AiListingSearchService {
     private AiListingSearchInterpretation parseInterpretation(String content) {
         try {
             JsonNode root = objectMapper.readTree(content);
+            if (root.isNull()) {
+                return new AiListingSearchInterpretation(
+                        new AiListingSearchFilter(
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                properties.defaultLimit()
+                        ),
+                        List.of()
+                );
+            }
             if (!root.isObject()) {
                 throw invalidFilter();
             }
@@ -138,6 +157,7 @@ public class AiListingSearchService {
         } catch (AiListingSearchException exception) {
             throw exception;
         } catch (RuntimeException exception) {
+            log.warn("GigaChat returned invalid listing filter JSON: {}", content, exception);
             throw invalidFilter();
         }
     }

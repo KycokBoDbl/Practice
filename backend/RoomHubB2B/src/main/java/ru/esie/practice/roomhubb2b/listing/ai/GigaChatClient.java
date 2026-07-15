@@ -14,7 +14,7 @@ import java.util.Map;
 @Service
 public class GigaChatClient implements GigaChatCompletionClient {
 
-    private static final String SYSTEM_PROMPT = """
+    private static final String UTF8_SYSTEM_PROMPT = """
             Извлеки фильтр поиска объявлений RoomHub из живого русского или английского запроса.
             Return only valid JSON with these keys:
             city, spaceType, minCapacity, minPricePerHour, maxPricePerHour, availableFrom, availableTo, ignoredTerms, limit.
@@ -86,7 +86,7 @@ public class GigaChatClient implements GigaChatCompletionClient {
         return Map.of(
                 "model", properties.model(),
                 "messages", List.of(
-                        Map.of("role", "system", "content", SYSTEM_PROMPT),
+                        Map.of("role", "system", "content", UTF8_SYSTEM_PROMPT),
                         Map.of("role", "user", "content", prompt)
                 ),
                 "temperature", 0,
