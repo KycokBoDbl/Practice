@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react'
+import type { FormEvent, KeyboardEvent } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -101,6 +101,18 @@ export function ListingPublicationPage() {
     }
   }
 
+  function handleFormKeyDown(event: KeyboardEvent<HTMLFormElement>) {
+    if (event.key !== 'Enter') {
+      return
+    }
+
+    if (event.target instanceof HTMLTextAreaElement) {
+      return
+    }
+
+    event.preventDefault()
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setCreatedListing(null)
@@ -187,7 +199,12 @@ export function ListingPublicationPage() {
         </Link>
       </section>
 
-      <form className={styles.layout} onSubmit={handleSubmit} noValidate>
+      <form
+        className={styles.layout}
+        onSubmit={handleSubmit}
+        onKeyDown={handleFormKeyDown}
+        noValidate
+      >
         <div className={styles.formBody}>
           <section className={styles.editorColumn}>
           <article className={styles.editorSection}>

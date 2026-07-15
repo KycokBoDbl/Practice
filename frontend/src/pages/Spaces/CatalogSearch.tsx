@@ -5,13 +5,11 @@ import type { Listing } from '../../types/listing'
 import styles from './SpacesPage.module.css'
 import {
   emptyCatalogQuery,
-  getActiveCatalogFilterBadges,
   getCatalogCityOptions,
   isCatalogQueryEmpty,
   parseCatalogQuery,
   setCatalogQueryParams,
   type CatalogQuery,
-  type CatalogSearchParamName,
 } from './catalogFilters'
 
 interface CatalogSearchProps {
@@ -88,11 +86,7 @@ function CatalogSearchForm({
   const [filtersOpen, setFiltersOpen] = useState(false)
   const searchAreaRef = useRef<HTMLDivElement>(null)
   const cities = useMemo(() => getCatalogCityOptions(listings), [listings])
-  const activeFilterBadges = useMemo(
-    () => getActiveCatalogFilterBadges(committedQuery),
-    [committedQuery],
-  )
-  const hasActiveFilters = activeFilterBadges.length > 0
+  const hasActiveFilters = !isCatalogQueryEmpty(committedQuery)
   const filtersVisible = filtersOpen || hasActiveFilters
 
   useEffect(() => {
@@ -176,16 +170,6 @@ function CatalogSearchForm({
     navigateWithQuery(emptyCatalogQuery)
   }
 
-  function removeFilter(name: CatalogSearchParamName) {
-    const nextQuery = {
-      ...committedQuery,
-      [name]: '',
-    }
-
-    setDraftQuery(nextQuery)
-    navigateWithQuery(nextQuery)
-  }
-
   function submitAiSearch() {
     onAiSearch(draftQuery.q)
   }
@@ -250,28 +234,6 @@ function CatalogSearchForm({
               Вернуться к обычному каталогу
             </button>
           )}
-        </div>
-      )}
-
-      {hasActiveFilters && (
-        <div className={styles.activeFilters} aria-label="Активные фильтры каталога">
-          <span className={styles.activeFiltersLabel}>Поиск по фильтрам:</span>
-          <div className={styles.filterBadges}>
-            {activeFilterBadges.map((badge) => (
-              <button
-                key={badge.key}
-                type="button"
-                className={styles.filterBadge}
-                onClick={() => removeFilter(badge.key)}
-                aria-label={`Убрать фильтр ${badge.label}`}
-              >
-                <span>
-                  {badge.label}: {badge.value}
-                </span>
-                <span aria-hidden="true">x</span>
-              </button>
-            ))}
-          </div>
         </div>
       )}
 
