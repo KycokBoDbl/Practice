@@ -1,6 +1,8 @@
 package ru.esie.practice.roomhubb2b.config;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -16,6 +18,7 @@ import ru.esie.practice.roomhubb2b.booking.BookingNotFoundException;
 import ru.esie.practice.roomhubb2b.listing.ListingConflictException;
 import ru.esie.practice.roomhubb2b.listing.ListingForbiddenException;
 import ru.esie.practice.roomhubb2b.listing.ListingNotFoundException;
+import ru.esie.practice.roomhubb2b.listing.ai.AiListingSearchException;
 import ru.esie.practice.roomhubb2b.listing.geocoding.AddressNotGeocodedException;
 import ru.esie.practice.roomhubb2b.listing.geocoding.GeocodingProviderException;
 import tools.jackson.databind.exc.InvalidFormatException;
@@ -26,6 +29,8 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ProblemDetail handleValidation(MethodArgumentNotValidException exception, HttpServletRequest request) {
@@ -78,6 +83,12 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(GeocodingProviderException.class)
     ProblemDetail handleGeocodingProvider(GeocodingProviderException exception, HttpServletRequest request) {
+        return problem(HttpStatus.BAD_GATEWAY, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(AiListingSearchException.class)
+    ProblemDetail handleAiListingSearch(AiListingSearchException exception, HttpServletRequest request) {
+        log.warn("AI listing search failed: {}", exception.getMessage(), exception);
         return problem(HttpStatus.BAD_GATEWAY, exception.getMessage(), request);
     }
 

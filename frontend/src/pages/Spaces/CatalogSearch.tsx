@@ -5,20 +5,34 @@ import type { Listing } from '../../types/listing'
 import styles from './SpacesPage.module.css'
 import {
   emptyCatalogQuery,
-  getActiveCatalogFilterBadges,
   getCatalogCityOptions,
   isCatalogQueryEmpty,
   parseCatalogQuery,
   setCatalogQueryParams,
   type CatalogQuery,
-  type CatalogSearchParamName,
 } from './catalogFilters'
 
 interface CatalogSearchProps {
+  aiActive: boolean
+  aiLoading: boolean
+  aiMessage: string
+  aiPrompt: string
+  aiResultCount: number
   listings: Listing[]
+  onAiSearch: (prompt: string) => void
+  onClearAiSearch: () => void
 }
 
-export function CatalogSearch({ listings }: CatalogSearchProps) {
+export function CatalogSearch({
+  aiActive,
+  aiLoading,
+  aiMessage,
+  aiPrompt,
+  aiResultCount,
+  listings,
+  onAiSearch,
+  onClearAiSearch,
+}: CatalogSearchProps) {
   const [searchParams] = useSearchParams()
   const committedQuery = useMemo(
     () => parseCatalogQuery(searchParams),
@@ -28,22 +42,43 @@ export function CatalogSearch({ listings }: CatalogSearchProps) {
   return (
     <CatalogSearchForm
       key={searchParams.toString()}
+      aiActive={aiActive}
+      aiLoading={aiLoading}
+      aiMessage={aiMessage}
+      aiPrompt={aiPrompt}
+      aiResultCount={aiResultCount}
       committedQuery={committedQuery}
       listings={listings}
+      onAiSearch={onAiSearch}
+      onClearAiSearch={onClearAiSearch}
       searchParams={searchParams}
     />
   )
 }
 
 interface CatalogSearchFormProps {
+  aiActive: boolean
+  aiLoading: boolean
+  aiMessage: string
+  aiPrompt: string
+  aiResultCount: number
   committedQuery: CatalogQuery
   listings: Listing[]
+  onAiSearch: (prompt: string) => void
+  onClearAiSearch: () => void
   searchParams: URLSearchParams
 }
 
 function CatalogSearchForm({
+  aiActive,
+  aiLoading,
+  aiMessage,
+  aiPrompt,
+  aiResultCount,
   committedQuery,
   listings,
+  onAiSearch,
+  onClearAiSearch,
   searchParams,
 }: CatalogSearchFormProps) {
   const navigate = useNavigate()
@@ -51,11 +86,7 @@ function CatalogSearchForm({
   const [filtersOpen, setFiltersOpen] = useState(false)
   const searchAreaRef = useRef<HTMLDivElement>(null)
   const cities = useMemo(() => getCatalogCityOptions(listings), [listings])
-  const activeFilterBadges = useMemo(
-    () => getActiveCatalogFilterBadges(committedQuery),
-    [committedQuery],
-  )
-  const hasActiveFilters = activeFilterBadges.length > 0
+  const hasActiveFilters = !isCatalogQueryEmpty(committedQuery)
   const filtersVisible = filtersOpen || hasActiveFilters
 
   useEffect(() => {
@@ -127,6 +158,10 @@ function CatalogSearchForm({
   }
 
   function runSearch() {
+    if (aiActive) {
+      onClearAiSearch()
+    }
+
     navigateWithQuery(draftQuery)
   }
 
@@ -135,55 +170,70 @@ function CatalogSearchForm({
     navigateWithQuery(emptyCatalogQuery)
   }
 
-  function removeFilter(name: CatalogSearchParamName) {
-    const nextQuery = {
-      ...committedQuery,
-      [name]: '',
-    }
-
-    setDraftQuery(nextQuery)
-    navigateWithQuery(nextQuery)
+  function submitAiSearch() {
+    onAiSearch(draftQuery.q)
   }
 
   return (
     <div className={styles.searchArea} ref={searchAreaRef}>
-      <form
-        className={styles.search}
-        onSubmit={(event) => {
-          event.preventDefault()
-          runSearch()
-        }}
-      >
-        <input
-          className={styles.searchInput}
-          type="search"
-          placeholder="Поиск помещений..."
-          aria-label="Поиск помещений"
-          value={draftQuery.q}
-          onChange={(event) => updateDraft('q', event.target.value)}
-          onFocus={() => setFiltersOpen(true)}
-        />
-      </form>
+      <div className={styles.searchBar}>
+        <div className={styles.searchInputWrap}>
+          <input
+            className={styles.searchInput}
+            type="search"
+            placeholder="Поиск помещений..."
+            aria-label="Поиск помещений"
+            value={draftQuery.q}
+            onChange={(event) => updateDraft('q', event.target.value)}
+            onFocus={() => setFiltersOpen(true)}
+          />
+          <span className={styles.searchHint}>AI</span>
+        </div>
 
-      {hasActiveFilters && (
-        <div className={styles.activeFilters} aria-label="Активные фильтры каталога">
-          <span className={styles.activeFiltersLabel}>Поиск по фильтрам:</span>
-          <div className={styles.filterBadges}>
-            {activeFilterBadges.map((badge) => (
-              <button
-                key={badge.key}
-                type="button"
-                className={styles.filterBadge}
-                onClick={() => removeFilter(badge.key)}
-                aria-label={`Убрать фильтр ${badge.label}`}
-              >
-                <span>
-                  {badge.label}: {badge.value}
-                </span>
-                <span aria-hidden="true">×</span>
-              </button>
-            ))}
-          </div>
+        <button
+          type="button"
+          className={styles.aiSearchButton}
+          onClick={submitAiSearch}
+          disabled={aiLoading}
+        >
+          {aiLoading ? 'Ищем...' : 'AI-поиск'}
+        </button>
+
+        <button
+          type="button"
+          className={styles.searchButton}
+          onClick={runSearch}
+        >
+          Поиск
+        </button>
+      </div>
+
+      <p className={styles.searchCaption}>
+        Строка поиска поддерживает обычный каталог и AI-подбор по свободному запросу.
+      </p>
+
+      {(aiActive || aiMessage) && (
+        <div
+          className={`${styles.aiSearchStatus} ${aiMessage ? styles.aiSearchStatusError : ''}`}
+        >
+          {aiActive && (
+            <p className={styles.aiSearchSummary}>
+              <strong>AI-поиск:</strong> {aiPrompt} · найдено {aiResultCount}
+            </p>
+          )}
+
+          {aiMessage && <p className={styles.aiSearchMessage}>{aiMessage}</p>}
+
+          {aiActive && (
+            <button
+              type="button"
+              className={styles.aiResetButton}
+              onClick={onClearAiSearch}
+              disabled={aiLoading}
+            >
+              Вернуться к обычному каталогу
+            </button>
+          )}
         </div>
       )}
 
@@ -279,10 +329,6 @@ function CatalogSearchForm({
               />
             </label>
           </div>
-
-          <button type="button" className={styles.searchButton} onClick={runSearch}>
-            Поиск
-          </button>
 
           <button type="button" className={styles.resetButton} onClick={resetFilters}>
             Сбросить

@@ -24,6 +24,7 @@ $env:SPRING_DATASOURCE_USERNAME = "postgres"
 $env:SPRING_DATASOURCE_PASSWORD = "postgres"
 $env:ROOMHUB_AUTH_TOKEN_SECRET = "replace-with-at-least-32-random-bytes"
 $env:ROOMHUB_GEOCODING_YANDEX_API_KEY = "replace-with-yandex-geocoder-api-key"
+$env:ROOMHUB_AI_GIGACHAT_AUTHORIZATION_KEY = "replace-with-gigachat-authorization-key"
 ```
 
 ```bash
@@ -32,11 +33,14 @@ export SPRING_DATASOURCE_USERNAME=postgres
 export SPRING_DATASOURCE_PASSWORD=postgres
 export ROOMHUB_AUTH_TOKEN_SECRET=replace-with-at-least-32-random-bytes
 export ROOMHUB_GEOCODING_YANDEX_API_KEY=replace-with-yandex-geocoder-api-key
+export ROOMHUB_AI_GIGACHAT_AUTHORIZATION_KEY=replace-with-gigachat-authorization-key
 ```
 
 ## Запуск
 
 `ROOMHUB_GEOCODING_YANDEX_API_KEY` is required and supplies the Yandex Geocoder API key used to geocode listing `city + address` on create and address edit. Set it from secret storage in production and shared environments.
+
+`ROOMHUB_AI_GIGACHAT_AUTHORIZATION_KEY` is required and supplies the Basic authorization key used to obtain a GigaChat access token for AI listing search. Store it as a secret. Optional GigaChat settings are `GIGACHAT_OAUTH_URL`, `GIGACHAT_CHAT_URL`, `GIGACHAT_MODEL`, `GIGACHAT_SCOPE`, `GIGACHAT_TIMEOUT`, `GIGACHAT_MAX_PROMPT_LENGTH`, `GIGACHAT_DEFAULT_LISTING_LIMIT`, and `GIGACHAT_MAX_LISTING_LIMIT`. AI search does not require a database migration.
 
 Windows:
 
@@ -51,6 +55,42 @@ Linux/macOS:
 ```
 
 `ROOMHUB_AUTH_TOKEN_SECRET` обязателен и должен содержать не менее 32 байт UTF-8. Значение выше служит только placeholder; для окружения используйте случайный секрет из secret storage. Issuer и TTL можно переопределить через `ROOMHUB_AUTH_TOKEN_ISSUER` и `ROOMHUB_AUTH_TOKEN_TTL` (ISO-8601 duration), по умолчанию используются `roomhub-b2b` и `PT15M`.
+
+## AI Listing Search
+
+Frontend clients can submit a natural-language prompt and render the returned listing cards with the existing `ListingResponseDto` schema.
+
+```http
+POST /api/listings/ai-search
+Content-Type: application/json
+
+{
+  "prompt": "Need a conference hall in Barnaul for 30 people under 5000 per hour"
+}
+```
+
+Successful response:
+
+```json
+[
+  {
+    "id": 42,
+    "title": "Conference hall",
+    "city": "Barnaul",
+    "pricePerHour": 4500.00,
+    "capacity": 40,
+    "spaceType": "CONFERENCE_HALL",
+    "imageUrl": "https://example.com/listing.jpg",
+    "description": "Projector and reception area",
+    "address": "Lenina Avenue, 10",
+    "ownerOrganizationName": "Landlord LLC",
+    "latitude": 53.348114,
+    "longitude": 83.779836
+  }
+]
+```
+
+The endpoint is public. It returns `400 Bad Request` for invalid prompt JSON or blank/too-long prompts, `502 Bad Gateway` when GigaChat token/model integration fails or returns invalid filter JSON, and `200 OK` with `[]` when no published listings match.
 
 ## Аутентификация юридического лица
 

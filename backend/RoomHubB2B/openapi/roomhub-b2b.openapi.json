@@ -363,6 +363,58 @@
         } ]
       }
     },
+    "/api/listings/ai-search" : {
+      "post" : {
+        "tags" : [ "ai-listing-search-controller" ],
+        "summary" : "Search listings from a natural-language prompt",
+        "operationId" : "searchListingsWithAi",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AiListingSearchRequestDto"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "Matching published listings",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ListingResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid AI search request",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "502" : {
+            "description" : "GigaChat integration failed",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/bookings" : {
       "get" : {
         "tags" : [ "Bookings" ],
@@ -1554,6 +1606,20 @@
           }
         },
         "required" : [ "address", "capacity", "city", "pricePerHour", "spaceType", "title" ]
+      },
+      "AiListingSearchRequestDto" : {
+        "type" : "object",
+        "description" : "Natural-language listing search prompt",
+        "properties" : {
+          "prompt" : {
+            "type" : "string",
+            "description" : "Natural-language prompt describing desired listing filters",
+            "example" : "Need a conference hall in Barnaul for 30 people under 5000 per hour",
+            "maxLength" : 1000,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "prompt" ]
       },
       "CreateBookingRequestDto" : {
         "type" : "object",

@@ -10,7 +10,7 @@ import { useListingMapView } from './useListingMapView'
 import { YandexListingMap } from './YandexListingMap'
 import styles from './SpacePage.module.css'
 
-const AMENITIES_PREFIXES = ['Удобства: ', 'РЈРґРѕР±СЃС‚РІР°: ']
+const AMENITIES_PREFIXES = ['Удобства: ']
 
 function splitDescriptionAndAmenities(value: string | null | undefined) {
   const trimmedValue = value?.trim()
@@ -74,7 +74,7 @@ export function SpacePage() {
       }
     }
 
-    loadListing()
+    void loadListing()
 
     return () => {
       cancelled = true
@@ -146,9 +146,7 @@ export function SpacePage() {
 
               <div className={styles.metaCard}>
                 <p className={styles.metaLabel}>Вместимость</p>
-                <p className={styles.metaValue}>
-                  до {listing.capacity} человек
-                </p>
+                <p className={styles.metaValue}>до {listing.capacity} человек</p>
               </div>
 
               <div className={styles.metaCard}>
